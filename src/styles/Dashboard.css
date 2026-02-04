@@ -66,6 +66,20 @@
   padding: 30px;
 }
 
+.supabase-status {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.supabase-status .error {
+  color: #991b1b;
+}
+
 .tabs {
   display: flex;
   gap: 10px;

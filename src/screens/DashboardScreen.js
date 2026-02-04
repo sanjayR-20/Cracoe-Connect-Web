@@ -47,6 +47,9 @@ export default function DashboardScreen() {
   const canAnnounce = useDataStore((state) => state.canAnnounce);
   const canSchedule = useDataStore((state) => state.canSchedule);
   const addMeeting = useDataStore((state) => state.addMeeting);
+  const supabaseReady = useDataStore((state) => state.supabaseReady);
+  const supabaseError = useDataStore((state) => state.supabaseError);
+  const supabaseLoading = useDataStore((state) => state.supabaseLoading);
   const canManageData = useDataStore((state) => state.canManageData);
   const deleteAnnouncement = useDataStore((state) => state.deleteAnnouncement);
   const deleteScheduleItem = useDataStore((state) => state.deleteScheduleItem);
@@ -185,6 +188,17 @@ export default function DashboardScreen() {
       </header>
 
       <div className="dashboard-content">
+        {(supabaseLoading || supabaseError || !supabaseReady) && (
+          <div className="supabase-status">
+            {supabaseLoading && <span>Syncing with Supabase...</span>}
+            {!supabaseLoading && supabaseError && (
+              <span className="error">Supabase error: {supabaseError}</span>
+            )}
+            {!supabaseLoading && !supabaseError && !supabaseReady && (
+              <span>Supabase not connected. Check env vars and schema.</span>
+            )}
+          </div>
+        )}
         <div className="tabs">
           <button
             className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
