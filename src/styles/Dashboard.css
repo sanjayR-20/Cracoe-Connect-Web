@@ -345,6 +345,15 @@
   margin-bottom: 4px;
 }
 
+.meeting-details,
+.schedule-content {
+  flex: 1;
+}
+
+.announcement-item {
+  align-items: flex-start;
+}
+
 .meeting-details p,
 .announcement-item p {
   color: #64748b;
@@ -769,6 +778,29 @@
 
 .announcement-card small {
   color: #94a3b8;
+}
+
+.delete-btn {
+  margin-left: auto;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #fca5a5;
+}
+
+.delete-btn.compact {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 .btn-create-task,

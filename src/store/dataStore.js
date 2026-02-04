@@ -11,318 +11,17 @@ const sendNotification = (title, message) => {
   }
 };
 
-const initialUsers = [
-  {
-    id: 'user_1',
-    username: 'sharvesh',
-    password: 'sharvesh123',
-    name: 'Sharvesh S',
-    designation: 'CEO',
-    email: 'sharvesh@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: true,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: true,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: true,
-      canManageMeetingMinutes: true,
-    },
-  },
-  {
-    id: 'user_2',
-    username: 'sivadharana',
-    password: 'sivadharana123',
-    name: 'Sivadharana',
-    designation: 'COO',
-    email: 'sivadharana@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: true,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: true,
-      canManageMeetingMinutes: true,
-    },
-  },
-  {
-    id: 'user_3',
-    username: 'shridharshini',
-    password: 'shridharshini123',
-    name: 'Shri Dharshini',
-    designation: 'CTO',
-    email: 'shridharshini@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: true,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: true,
-      canManageMeetingMinutes: true,
-    },
-  },
-  {
-    id: 'user_4',
-    username: 'pavith',
-    password: 'pavith123',
-    name: 'Pavith',
-    designation: 'Marketing Lead',
-    email: 'pavith@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: false,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_5',
-    username: 'sanjay',
-    password: 'sanjay123',
-    name: 'Sanjay R',
-    designation: 'CFO',
-    email: 'sanjay@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: true,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: true,
-      canManageMeetingMinutes: true,
-    },
-  },
-  {
-    id: 'user_6',
-    username: 'sakthivel',
-    password: 'sakthivel123',
-    name: 'Sakthivel',
-    designation: 'Manager',
-    email: 'sakthivel@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: false,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_7',
-    username: 'shanmugavel',
-    password: 'shanmugavel123',
-    name: 'Shanmugavel',
-    designation: 'Developer',
-    email: 'shanmugavel@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: false,
-      canViewAdmin: false,
-      canManageTeam: false,
-      canViewAllTasks: false,
-      canEditAllTasks: false,
-      canAnnounce: false,
-      canSchedule: false,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_8',
-    username: 'shreevardhann',
-    password: 'shreevardhann123',
-    name: 'Shree Vardhann',
-    designation: 'Developer',
-    email: 'shreevardhann@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: false,
-      canViewAdmin: false,
-      canManageTeam: false,
-      canViewAllTasks: false,
-      canEditAllTasks: false,
-      canAnnounce: false,
-      canSchedule: false,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_9',
-    username: 'shalini',
-    password: 'shalini123',
-    name: 'Shalini',
-    designation: 'Developer',
-    email: 'shalini@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: false,
-      canViewAdmin: false,
-      canManageTeam: false,
-      canViewAllTasks: false,
-      canEditAllTasks: false,
-      canAnnounce: false,
-      canSchedule: false,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_10',
-    username: 'sreejith',
-    password: 'sreejith123',
-    name: 'Sreejith',
-    designation: 'Manager',
-    email: 'sreejith@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: true,
-      canViewAdmin: false,
-      canManageTeam: true,
-      canViewAllTasks: true,
-      canEditAllTasks: false,
-      canAnnounce: true,
-      canSchedule: true,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-  {
-    id: 'user_11',
-    username: 'sujithra',
-    password: 'sujithra123',
-    name: 'Sujithra',
-    designation: 'Developer',
-    email: 'sujithra@cracoeconnect.com',
-    permissions: {
-      canAssignTasks: false,
-      canViewAdmin: false,
-      canManageTeam: false,
-      canViewAllTasks: false,
-      canEditAllTasks: false,
-      canAnnounce: false,
-      canSchedule: false,
-      canViewMeetingMinutes: false,
-      canManageMeetingMinutes: false,
-    },
-  },
-];
+const initialUsers = [];
 
-const initialTasks = [
-  {
-    id: 'task_1',
-    title: 'Design Landing Page',
-    description: 'Create modern landing page design',
-    priority: 'High',
-    deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: 'In Progress',
-    assignedToId: ['user_4'],
-    createdBy: 'user_1',
-  },
-  {
-    id: 'task_2',
-    title: 'Fix Login Bug',
-    description: 'Debug authentication flow',
-    priority: 'Critical',
-    deadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: 'Pending',
-    assignedToId: ['user_7', 'user_8'],
-    createdBy: 'user_3',
-  },
-  {
-    id: 'task_3',
-    title: 'Database Migration',
-    description: 'Migrate user data to new database',
-    priority: 'High',
-    deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: 'Completed',
-    assignedToId: ['user_3'],
-    createdBy: 'user_1',
-  },
-];
+const initialTasks = [];
 
-const initialAnnouncements = [
-  {
-    id: 'announcement_1',
-    title: 'Welcome to Cracoe Connect',
-    message: 'New team collaboration platform launched',
-    createdBy: 'user_1',
-    timestamp: new Date().toISOString(),
-  },
-  {
-    id: 'announcement_2',
-    title: 'Q1 Planning Meeting',
-    message: 'All hands meeting scheduled for next Friday',
-    createdBy: 'user_5',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-];
+const initialAnnouncements = [];
 
-const initialSchedule = [
-  {
-    id: 'schedule_1',
-    title: 'Team Standup',
-    time: '09:30 AM',
-    type: 'Meeting',
-  },
-  {
-    id: 'schedule_2',
-    title: 'Project Review',
-    time: '02:00 PM',
-    type: 'Meeting',
-  },
-];
+const initialSchedule = [];
 
-const initialMessages = [
-  {
-    id: 'message_1',
-    fromId: 'user_1',
-    type: 'text',
-    message: 'Welcome everyone! Use this channel for team-wide updates.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'message_2',
-    fromId: 'user_3',
-    type: 'text',
-    message: 'Noted. I will post the technical proposal summary here shortly.',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-];
+const initialMessages = [];
 
-const initialMeetings = [
-  {
-    id: 'meeting_1',
-    title: 'Q1 Strategic Planning',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:00 AM',
-    attendees: ['user_1', 'user_2', 'user_3', 'user_5'],
-    minutes: 'Discussed quarterly goals and roadmap. Allocated budget for new projects.',
-  },
-  {
-    id: 'meeting_2',
-    title: 'Tech Stack Review',
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '02:00 PM',
-    attendees: ['user_3', 'user_7', 'user_8', 'user_9'],
-    minutes: '',
-  },
-];
+const initialMeetings = [];
 
 const isSupabaseConfigured = () => {
   return Boolean(process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_ANON_KEY);
@@ -473,16 +172,29 @@ export const useDataStore = create((set, get) => ({
         );
       }
 
-      const users = usersRes.data || [];
-      const tasks = (tasksRes.data || []).map(deserializeTask);
+      let users = usersRes.data || [];
+      let tasks = (tasksRes.data || []).map(deserializeTask);
       const announcements = (announcementsRes.data || []).map(deserializeAnnouncement);
       const schedule = (scheduleRes.data || []).map(deserializeSchedule);
       const messages = (messagesRes.data || []).map(deserializeMessage);
       const meetings = (meetingsRes.data || []).map(deserializeMeeting);
 
-      if (users.length === 0) {
-        await get().seedSupabase();
-        return;
+      const pavithUser = users.find((u) => u.username === 'pavith');
+      if (pavithUser) {
+        users = users.filter((u) => u.id !== pavithUser.id);
+        tasks = tasks.map((task) => ({
+          ...task,
+          assignedToId: task.assignedToId.filter((id) => id !== pavithUser.id),
+        }));
+        if (isSupabaseConfigured()) {
+          await supabase.from('users').delete().eq('id', pavithUser.id);
+          const tasksToUpdate = tasks.filter((task) => task.assignedToId.length > 0);
+          await Promise.all(
+            tasksToUpdate.map((task) =>
+              supabase.from('tasks').update({ assigned_to_id: task.assignedToId }).eq('id', task.id)
+            )
+          );
+        }
       }
 
       set({
@@ -505,35 +217,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   seedSupabase: async () => {
-    if (!isSupabaseConfigured()) return;
-
-    try {
-      await Promise.all([
-        supabase.from('users').insert(initialUsers.map(serializeUser)),
-        supabase.from('tasks').insert(initialTasks.map(serializeTask)),
-        supabase.from('announcements').insert(initialAnnouncements.map(serializeAnnouncement)),
-        supabase.from('schedule_items').insert(initialSchedule.map(serializeSchedule)),
-        supabase.from('messages').insert(initialMessages.map(serializeMessage)),
-        supabase.from('meetings').insert(initialMeetings.map(serializeMeeting)),
-      ]);
-
-      set({
-        users: initialUsers,
-        tasks: initialTasks,
-        announcements: initialAnnouncements,
-        schedule: initialSchedule,
-        messages: initialMessages,
-        meetings: initialMeetings,
-        supabaseReady: true,
-        supabaseLoading: false,
-      });
-    } catch (error) {
-      set({
-        supabaseError: error?.message || 'Supabase seed failed',
-        supabaseReady: false,
-        supabaseLoading: false,
-      });
-    }
+    return;
   },
 
   // Authentication
@@ -604,6 +288,12 @@ export const useDataStore = create((set, get) => ({
     return user?.permissions?.canManageMeetingMinutes ?? false;
   },
 
+  canManageData: () => {
+    const user = get().getCurrentUser();
+    const role = user?.designation;
+    return ['CEO', 'COO', 'CTO', 'CFO', 'Manager'].includes(role);
+  },
+
   // Task operations
   createTask: (title, description, priority, deadline, assignedTo) => {
     const newTask = {
@@ -647,6 +337,16 @@ export const useDataStore = create((set, get) => ({
     });
   },
 
+  deleteTask: (taskId) => {
+    set((state) => ({
+      tasks: state.tasks.filter((task) => task.id !== taskId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('tasks').delete().eq('id', taskId);
+    }
+  },
+
   getTasksForUser: (userId) => {
     return get().tasks.filter((task) => task.assignedToId.includes(userId));
   },
@@ -677,6 +377,16 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  deleteAnnouncement: (announcementId) => {
+    set((state) => ({
+      announcements: state.announcements.filter((item) => item.id !== announcementId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('announcements').delete().eq('id', announcementId);
+    }
+  },
+
   // Schedule
   addScheduleItem: (title, time, type) => {
     const newItem = {
@@ -691,6 +401,16 @@ export const useDataStore = create((set, get) => ({
 
     if (isSupabaseConfigured()) {
       supabase.from('schedule_items').insert(serializeSchedule(newItem));
+    }
+  },
+
+  deleteScheduleItem: (scheduleId) => {
+    set((state) => ({
+      schedule: state.schedule.filter((item) => item.id !== scheduleId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('schedule_items').delete().eq('id', scheduleId);
     }
   },
 
@@ -729,6 +449,16 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  deleteMessage: (messageId) => {
+    set((state) => ({
+      messages: state.messages.filter((msg) => msg.id !== messageId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('messages').delete().eq('id', messageId);
+    }
+  },
+
   // Meetings
   addMeeting: (title, date, time, attendees) => {
     const newMeeting = {
@@ -745,6 +475,16 @@ export const useDataStore = create((set, get) => ({
 
     if (isSupabaseConfigured()) {
       supabase.from('meetings').insert(serializeMeeting(newMeeting));
+    }
+  },
+
+  deleteMeeting: (meetingId) => {
+    set((state) => ({
+      meetings: state.meetings.filter((meeting) => meeting.id !== meetingId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('meetings').delete().eq('id', meetingId);
     }
   },
 
@@ -855,6 +595,47 @@ export const useDataStore = create((set, get) => ({
       if (user) {
         supabase.from('users').update({ permissions: user.permissions }).eq('id', userId);
       }
+    }
+  },
+
+  addUser: (user) => {
+    set((state) => ({
+      users: [...state.users, user],
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('users').insert(serializeUser(user));
+    }
+  },
+
+  removeUser: (userId) => {
+    set((state) => {
+      const users = state.users.filter((u) => u.id !== userId);
+      const tasks = state.tasks.map((task) => ({
+        ...task,
+        assignedToId: task.assignedToId.filter((id) => id !== userId),
+      }));
+      const meetings = state.meetings.map((meeting) => ({
+        ...meeting,
+        attendees: meeting.attendees.filter((id) => id !== userId),
+      }));
+      const messages = state.messages.filter((msg) => msg.fromId !== userId);
+      return { users, tasks, meetings, messages };
+    });
+
+    if (isSupabaseConfigured()) {
+      supabase.from('users').delete().eq('id', userId);
+      supabase.from('messages').delete().eq('from_id', userId);
+      const tasksToUpdate = get().tasks.filter((task) => task.assignedToId.includes(userId));
+      tasksToUpdate.forEach((task) => {
+        const updated = task.assignedToId.filter((id) => id !== userId);
+        supabase.from('tasks').update({ assigned_to_id: updated }).eq('id', task.id);
+      });
+      const meetingsToUpdate = get().meetings.filter((meeting) => meeting.attendees.includes(userId));
+      meetingsToUpdate.forEach((meeting) => {
+        const updated = meeting.attendees.filter((id) => id !== userId);
+        supabase.from('meetings').update({ attendees: updated }).eq('id', meeting.id);
+      });
     }
   },
 }));

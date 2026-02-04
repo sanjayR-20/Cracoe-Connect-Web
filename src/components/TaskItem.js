@@ -5,8 +5,10 @@ import { Play, CheckCircle, Clock } from 'lucide-react';
 
 export default function TaskItem({ task }) {
   const updateTaskStatus = useDataStore((state) => state.updateTaskStatus);
+  const deleteTask = useDataStore((state) => state.deleteTask);
   const currentUserId = useDataStore((state) => state.currentUserId);
   const canEditAllTasks = useDataStore((state) => state.canEditAllTasks);
+  const canManageData = useDataStore((state) => state.canManageData);
 
   const canEdit = canEditAllTasks() || task.assignedToId.includes(currentUserId);
 
@@ -101,6 +103,12 @@ export default function TaskItem({ task }) {
             </button>
           )}
         </div>
+      )}
+
+      {canManageData() && (
+        <button className="action-btn delete" onClick={() => deleteTask(task.id)}>
+          Delete Task
+        </button>
       )}
     </div>
   );

@@ -47,6 +47,11 @@ export default function DashboardScreen() {
   const canAnnounce = useDataStore((state) => state.canAnnounce);
   const canSchedule = useDataStore((state) => state.canSchedule);
   const addMeeting = useDataStore((state) => state.addMeeting);
+  const canManageData = useDataStore((state) => state.canManageData);
+  const deleteAnnouncement = useDataStore((state) => state.deleteAnnouncement);
+  const deleteScheduleItem = useDataStore((state) => state.deleteScheduleItem);
+  const deleteMeeting = useDataStore((state) => state.deleteMeeting);
+  const deleteMessage = useDataStore((state) => state.deleteMessage);
 
   const currentUser = getCurrentUser();
   const stats = getTaskStatistics();
@@ -415,6 +420,14 @@ export default function DashboardScreen() {
                         <p className="meeting-minutes">Minutes: {meeting.minutes.substring(0, 50)}...</p>
                       )}
                     </div>
+                    {canManageData() && (
+                      <button
+                        className="delete-btn"
+                        onClick={() => deleteMeeting(meeting.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -436,6 +449,14 @@ export default function DashboardScreen() {
                     <h4>{announcement.title}</h4>
                     <p>{announcement.message}</p>
                     <small>{new Date(announcement.timestamp).toLocaleString()}</small>
+                    {canManageData() && (
+                      <button
+                        className="delete-btn"
+                        onClick={() => deleteAnnouncement(announcement.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -549,6 +570,14 @@ export default function DashboardScreen() {
                         )}
                         {(!msg.type || msg.type === 'text') && <p>{msg.message}</p>}
                         <small>{new Date(msg.timestamp).toLocaleTimeString()}</small>
+                        {canManageData() && (
+                          <button
+                            className="delete-btn compact"
+                            onClick={() => deleteMessage(msg.id)}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -582,6 +611,14 @@ export default function DashboardScreen() {
                     <h4>{item.title}</h4>
                     <p>{item.type}</p>
                   </div>
+                  {canManageData() && (
+                    <button
+                      className="delete-btn"
+                      onClick={() => deleteScheduleItem(item.id)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -665,6 +702,14 @@ export default function DashboardScreen() {
                   <h4>{announcement.title}</h4>
                   <p>{announcement.message}</p>
                   <small>{new Date(announcement.timestamp).toLocaleString()}</small>
+                  {canManageData() && (
+                    <button
+                      className="delete-btn"
+                      onClick={() => deleteAnnouncement(announcement.id)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

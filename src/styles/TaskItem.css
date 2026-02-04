@@ -125,6 +125,15 @@
   background: #fde68a;
 }
 
+.action-btn.delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.action-btn.delete:hover {
+  background: #fecaca;
+}
+
 @media (max-width: 600px) {
   .task-header {
     flex-direction: column;
