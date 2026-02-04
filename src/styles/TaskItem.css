@@ -1,0 +1,141 @@
+.task-item {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid #667eea;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+  transition: all 0.3s;
+}
+
+.task-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.task-title-section {
+  flex: 1;
+}
+
+.task-title-section h4 {
+  color: #1e293b;
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+.task-description {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.task-badges {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.priority-badge {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+.task-meta {
+  display: flex;
+  gap: 20px;
+  padding: 12px 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+}
+
+.meta-item svg {
+  flex-shrink: 0;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s;
+}
+
+.action-btn.start {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.action-btn.start:hover {
+  background: #bfdbfe;
+}
+
+.action-btn.complete {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.action-btn.complete:hover {
+  background: #bbf7d0;
+}
+
+.action-btn.reset {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.action-btn.reset:hover {
+  background: #fde68a;
+}
+
+@media (max-width: 600px) {
+  .task-header {
+    flex-direction: column;
+  }
+
+  .task-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .task-actions {
+    justify-content: flex-start;
+  }
+}

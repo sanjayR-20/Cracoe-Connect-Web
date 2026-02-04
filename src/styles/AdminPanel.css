@@ -1,0 +1,200 @@
+.admin-panel-container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 30px 20px;
+}
+
+.admin-header {
+  max-width: 1000px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.admin-header h1 {
+  font-size: 28px;
+  color: #1e293b;
+  flex: 1;
+}
+
+.admin-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.access-denied {
+  max-width: 500px;
+  margin: 100px auto;
+  background: white;
+  border-radius: 8px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.access-denied svg {
+  color: #ef4444;
+}
+
+.access-denied h2 {
+  color: #1e293b;
+  font-size: 24px;
+}
+
+.access-denied p {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.access-denied button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.access-denied button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.permissions-management {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.user-permission-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.user-permission-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.user-name-role {
+  flex: 1;
+}
+
+.user-name-role h3 {
+  color: #1e293b;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.user-name-role p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.permissions-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.permission-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.permission-toggle label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  position: relative;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toggle-switch.active {
+  background: #22c55e;
+}
+
+.toggle-switch svg {
+  color: white;
+}
+
+@media (max-width: 800px) {
+  .permissions-management {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-panel-container {
+    padding: 20px 15px;
+  }
+
+  .admin-header h1 {
+    font-size: 22px;
+  }
+
+  .user-permission-card {
+    padding: 16px;
+  }
+
+  .permissions-toggles {
+    gap: 10px;
+  }
+}
