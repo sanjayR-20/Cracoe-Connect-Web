@@ -23,6 +23,21 @@ const initialMessages = [];
 
 const initialMeetings = [];
 
+const upsertById = (items, next) => {
+  const idx = items.findIndex((item) => item.id === next.id);
+  if (idx === -1) {
+    return [...items, next];
+  }
+  const updated = [...items];
+  updated[idx] = { ...updated[idx], ...next };
+  return updated;
+};
+
+const removeById = (items, id) => items.filter((item) => item.id !== id);
+
+const sortByTimestamp = (items) =>
+  [...items].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
 const isSupabaseConfigured = () => {
   const url = process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -139,6 +154,7 @@ export const useDataStore = create((set, get) => ({
   supabaseReady: false,
   supabaseError: null,
   supabaseLoading: false,
+  realtimeChannel: null,
 
   setSupabaseError: (message) => {
     set({ supabaseError: message });
@@ -213,6 +229,7 @@ export const useDataStore = create((set, get) => ({
         supabaseReady: true,
         supabaseLoading: false,
       });
+      get().startRealtime();
     } catch (error) {
       set({
         supabaseError: error?.message || 'Supabase connection failed',
@@ -220,6 +237,115 @@ export const useDataStore = create((set, get) => ({
         supabaseLoading: false,
       });
     }
+  },
+
+  startRealtime: () => {
+    if (!isSupabaseConfigured()) {
+      return;
+    }
+    if (get().realtimeChannel) {
+      return;
+    }
+
+    const channel = supabase.channel('realtime:cracoe-connect');
+
+    channel
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => {
+            const users = removeById(state.users, removedId);
+            const tasks = state.tasks
+              .map((task) => ({
+                ...task,
+                assignedToId: task.assignedToId.filter((id) => id !== removedId),
+              }))
+              .filter((task) => task.assignedToId.length > 0);
+            const meetings = state.meetings.map((meeting) => ({
+              ...meeting,
+              attendees: meeting.attendees.filter((id) => id !== removedId),
+            }));
+            const messages = state.messages.filter((msg) => msg.fromId !== removedId);
+            return { users, tasks, meetings, messages };
+          });
+          return;
+        }
+
+        const userRow = payload.new;
+        if (!userRow) return;
+        set((state) => ({ users: upsertById(state.users, userRow) }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => ({ tasks: removeById(state.tasks, removedId) }));
+          return;
+        }
+        const taskRow = payload.new;
+        if (!taskRow) return;
+        const task = deserializeTask(taskRow);
+        set((state) => ({ tasks: upsertById(state.tasks, task) }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => ({ announcements: removeById(state.announcements, removedId) }));
+          return;
+        }
+        const row = payload.new;
+        if (!row) return;
+        const announcement = deserializeAnnouncement(row);
+        set((state) => ({ announcements: upsertById(state.announcements, announcement) }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule_items' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => ({ schedule: removeById(state.schedule, removedId) }));
+          return;
+        }
+        const row = payload.new;
+        if (!row) return;
+        const item = deserializeSchedule(row);
+        set((state) => ({ schedule: upsertById(state.schedule, item) }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => ({ messages: removeById(state.messages, removedId) }));
+          return;
+        }
+        const row = payload.new;
+        if (!row) return;
+        const message = deserializeMessage(row);
+        set((state) => ({ messages: sortByTimestamp(upsertById(state.messages, message)) }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meetings' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removedId = payload.old?.id;
+          if (!removedId) return;
+          set((state) => ({ meetings: removeById(state.meetings, removedId) }));
+          return;
+        }
+        const row = payload.new;
+        if (!row) return;
+        const meeting = deserializeMeeting(row);
+        set((state) => ({ meetings: upsertById(state.meetings, meeting) }));
+      })
+      .subscribe();
+
+    set({ realtimeChannel: channel });
+  },
+
+  stopRealtime: async () => {
+    const channel = get().realtimeChannel;
+    if (!channel) return;
+    await supabase.removeChannel(channel);
+    set({ realtimeChannel: null });
   },
 
   seedSupabase: async () => {
