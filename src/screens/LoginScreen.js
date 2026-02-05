@@ -10,11 +10,20 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const authenticate = useDataStore((state) => state.authenticate);
+  const users = useDataStore((state) => state.users);
+  const supabaseLoading = useDataStore((state) => state.supabaseLoading);
+  const supabaseError = useDataStore((state) => state.supabaseError);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!supabaseLoading && users.length === 0) {
+      setError('No users loaded. Check your Supabase connection and seeded users.');
+      setLoading(false);
+      return;
+    }
 
     if (!username.trim() || !password.trim()) {
       setError('Please enter both username and password');
@@ -31,13 +40,16 @@ export default function LoginScreen() {
   };
 
   const demoCredentials = [
-    { username: 'sharvesh', password: 'sharvesh123', role: 'CEO' },
-    { username: 'sivadharana', password: 'sivadharana123', role: 'COO' },
-    { username: 'shridharshini', password: 'shridharshini123', role: 'CTO' },
-    { username: 'sanjay', password: 'sanjay123', role: 'CFO' },
-    { username: 'pavith', password: 'pavith123', role: 'Marketing Lead' },
-    { username: 'sakthivel', password: 'sakthivel123', role: 'Manager' },
-    { username: 'shanmugavel', password: 'shanmugavel123', role: 'Developer' },
+    { username: 'sharvesh', password: 'S@rvesh*&^2026', role: 'CEO' },
+    { username: 'sivadharana', password: 'Siv@dh@r@na$^2026', role: 'COO' },
+    { username: 'shridharshini', password: 'Shr!Dh@r$hini&2026', role: 'CTO' },
+    { username: 'sanjay', password: 'S@nJ@y*^&2026', role: 'CFO' },
+    { username: 'sakthivel', password: 'S@kth!v3l$^2026', role: 'Manager' },
+    { username: 'shanmugavel', password: 'Sh@nMug@vel*&2026', role: 'Developer' },
+    { username: 'shreevardhann', password: 'Shr33V@rdh@nn$2026', role: 'Developer' },
+    { username: 'shalini', password: 'Sh@l!n!^&2026', role: 'Developer' },
+    { username: 'sreejith', password: 'Sre3j!th@*2026', role: 'Manager' },
+    { username: 'sujithra', password: 'Suj!thr@*&2026', role: 'Developer' },
   ];
 
   const handleDemoLogin = (demoUsername, demoPassword) => {
@@ -80,6 +92,7 @@ export default function LoginScreen() {
               />
             </div>
 
+            {supabaseError && <div className="error-message">{supabaseError}</div>}
             {error && <div className="error-message">{error}</div>}
 
             <button type="submit" className="login-button" disabled={loading}>
