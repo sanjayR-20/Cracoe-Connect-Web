@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import { supabase } from '../lib/supabaseClient';
 
 // Notification helper for web
@@ -137,6 +137,10 @@ export const useDataStore = create((set, get) => ({
   supabaseReady: false,
   supabaseError: null,
   supabaseLoading: false,
+
+  setSupabaseError: (message) => {
+    set({ supabaseError: message });
+  },
 
   initializeFromSupabase: async () => {
     if (!isSupabaseConfigured()) {
@@ -296,23 +300,27 @@ export const useDataStore = create((set, get) => ({
 
   // Task operations
   createTask: (title, description, priority, deadline, assignedTo) => {
-    const newTask = {
-      id: `task_${Date.now()}_${Math.random()}`,
+    const now = Date.now();
+    const newTasks = assignedTo.map((userId) => ({
+      id: `task_${now}_${userId}_${Math.random()}`,
       title,
       description,
       priority,
       deadline,
       status: 'Pending',
-      assignedToId: assignedTo,
+      assignedToId: [userId],
       createdBy: get().currentUserId,
-    };
+    }));
 
     set((state) => ({
-      tasks: [...state.tasks, newTask],
+      tasks: [...state.tasks, ...newTasks],
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('tasks').insert(serializeTask(newTask));
+      supabase
+        .from('tasks')
+        .insert(newTasks.map(serializeTask))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
 
     assignedTo.forEach((userId) => {
@@ -328,7 +336,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
+      supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
 
     const task = get().tasks.find((t) => t.id === taskId);
@@ -343,7 +355,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('tasks').delete().eq('id', taskId);
+      supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -373,7 +389,10 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('announcements').insert(serializeAnnouncement(newAnnouncement));
+      supabase
+        .from('announcements')
+        .insert(serializeAnnouncement(newAnnouncement))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -383,7 +402,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('announcements').delete().eq('id', announcementId);
+      supabase
+        .from('announcements')
+        .delete()
+        .eq('id', announcementId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -400,7 +423,10 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('schedule_items').insert(serializeSchedule(newItem));
+      supabase
+        .from('schedule_items')
+        .insert(serializeSchedule(newItem))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -410,7 +436,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('schedule_items').delete().eq('id', scheduleId);
+      supabase
+        .from('schedule_items')
+        .delete()
+        .eq('id', scheduleId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -428,7 +458,10 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('messages').insert(serializeMessage(newMessage));
+      supabase
+        .from('messages')
+        .insert(serializeMessage(newMessage))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -445,7 +478,10 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('messages').insert(serializeMessage(newMessage));
+      supabase
+        .from('messages')
+        .insert(serializeMessage(newMessage))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -455,7 +491,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('messages').delete().eq('id', messageId);
+      supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -474,7 +514,10 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('meetings').insert(serializeMeeting(newMeeting));
+      supabase
+        .from('meetings')
+        .insert(serializeMeeting(newMeeting))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -484,7 +527,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('meetings').delete().eq('id', meetingId);
+      supabase
+        .from('meetings')
+        .delete()
+        .eq('id', meetingId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -496,7 +543,11 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('meetings').update({ minutes }).eq('id', meetingId);
+      supabase
+        .from('meetings')
+        .update({ minutes })
+        .eq('id', meetingId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
@@ -593,7 +644,11 @@ export const useDataStore = create((set, get) => ({
     if (isSupabaseConfigured()) {
       const user = get().users.find((u) => u.id === userId);
       if (user) {
-        supabase.from('users').update({ permissions: user.permissions }).eq('id', userId);
+        supabase
+          .from('users')
+          .update({ permissions: user.permissions })
+          .eq('id', userId)
+          .then(({ error }) => error && set({ supabaseError: error.message }));
       }
     }
   },
@@ -604,17 +659,22 @@ export const useDataStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured()) {
-      supabase.from('users').insert(serializeUser(user));
+      supabase
+        .from('users')
+        .insert(serializeUser(user))
+        .then(({ error }) => error && set({ supabaseError: error.message }));
     }
   },
 
   removeUser: (userId) => {
     set((state) => {
       const users = state.users.filter((u) => u.id !== userId);
-      const tasks = state.tasks.map((task) => ({
-        ...task,
-        assignedToId: task.assignedToId.filter((id) => id !== userId),
-      }));
+      const tasks = state.tasks
+        .map((task) => ({
+          ...task,
+          assignedToId: task.assignedToId.filter((id) => id !== userId),
+        }))
+        .filter((task) => task.assignedToId.length > 0);
       const meetings = state.meetings.map((meeting) => ({
         ...meeting,
         attendees: meeting.attendees.filter((id) => id !== userId),
@@ -624,17 +684,33 @@ export const useDataStore = create((set, get) => ({
     });
 
     if (isSupabaseConfigured()) {
-      supabase.from('users').delete().eq('id', userId);
-      supabase.from('messages').delete().eq('from_id', userId);
+      supabase
+        .from('users')
+        .delete()
+        .eq('id', userId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
+      supabase
+        .from('messages')
+        .delete()
+        .eq('from_id', userId)
+        .then(({ error }) => error && set({ supabaseError: error.message }));
       const tasksToUpdate = get().tasks.filter((task) => task.assignedToId.includes(userId));
       tasksToUpdate.forEach((task) => {
         const updated = task.assignedToId.filter((id) => id !== userId);
-        supabase.from('tasks').update({ assigned_to_id: updated }).eq('id', task.id);
+        supabase
+          .from('tasks')
+          .update({ assigned_to_id: updated })
+          .eq('id', task.id)
+          .then(({ error }) => error && set({ supabaseError: error.message }));
       });
       const meetingsToUpdate = get().meetings.filter((meeting) => meeting.attendees.includes(userId));
       meetingsToUpdate.forEach((meeting) => {
         const updated = meeting.attendees.filter((id) => id !== userId);
-        supabase.from('meetings').update({ attendees: updated }).eq('id', meeting.id);
+        supabase
+          .from('meetings')
+          .update({ attendees: updated })
+          .eq('id', meeting.id)
+          .then(({ error }) => error && set({ supabaseError: error.message }));
       });
     }
   },
