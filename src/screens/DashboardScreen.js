@@ -12,6 +12,7 @@ import {
   Calendar,
   Send,
   Plus,
+  Video,
 } from 'lucide-react';
 
 export default function DashboardScreen() {
@@ -640,7 +641,13 @@ export default function DashboardScreen() {
             <div className="meeting-creator">
               <div className="section-header">
                 <h3>Create Meeting</h3>
-                {!canSchedule() && <span className="access-note">Only leadership can schedule</span>}
+                <div className="meeting-actions">
+                  <button className="btn-secondary" onClick={() => navigate('/video-meet')}>
+                    <Video size={18} />
+                    Launch video meet
+                  </button>
+                  {!canSchedule() && <span className="access-note">Only leadership can schedule</span>}
+                </div>
               </div>
 
               {canSchedule() ? (

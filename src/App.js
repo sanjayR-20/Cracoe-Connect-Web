@@ -6,6 +6,7 @@ import DashboardScreen from './screens/DashboardScreen';
 import EmployeeDetailScreen from './screens/EmployeeDetailScreen';
 import CreateTaskScreen from './screens/CreateTaskScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
+import VideoMeetScreen from './screens/VideoMeetScreen';
 import './styles/index.css';
 
 function ProtectedRoute({ children }) {
@@ -62,6 +63,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminPanelScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/video-meet"
+          element={
+            <ProtectedRoute>
+              <VideoMeetScreen />
             </ProtectedRoute>
           }
         />

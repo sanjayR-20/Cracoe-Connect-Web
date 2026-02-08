@@ -771,6 +771,33 @@
   transform: translateY(-2px);
 }
 
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #475569;
+  border: 1px solid #cbd5f5;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #667eea;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.meeting-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .announcement-card {
   background: white;
   border-radius: 8px;
