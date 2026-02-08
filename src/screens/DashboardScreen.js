@@ -57,6 +57,16 @@ export default function DashboardScreen() {
   const deleteMeeting = useDataStore((state) => state.deleteMeeting);
   const deleteMessage = useDataStore((state) => state.deleteMessage);
 
+  const systemMessageTypes = new Set([
+    'meeting_host',
+    'meeting_lobby',
+    'meeting_request',
+    'meeting_approved',
+    'meeting_denied',
+    'meeting_recording',
+  ]);
+  const visibleMessages = messages.filter((msg) => !systemMessageTypes.has(msg.type));
+
   const currentUser = getCurrentUser();
   const stats = getTaskStatistics();
 
@@ -532,7 +542,7 @@ export default function DashboardScreen() {
                   </div>
                 </div>
                 <div className="messages-display" ref={messagesEndRef}>
-                  {messages.map((msg) => {
+                  {visibleMessages.map((msg) => {
                     const sender = getUser(msg.fromId);
                     return (
                       <div
