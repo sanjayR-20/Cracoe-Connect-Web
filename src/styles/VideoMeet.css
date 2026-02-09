@@ -113,6 +113,25 @@
   box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
 }
 
+.meet-preview {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.meet-preview video {
+  width: 100%;
+  height: 220px;
+  border-radius: 16px;
+  background: #0b0f1a;
+  object-fit: cover;
+}
+
+.meet-preview span {
+  color: var(--meet-muted);
+  font-size: 13px;
+}
+
 .meet-label {
   display: block;
   margin-bottom: 8px;
@@ -241,6 +260,63 @@
   overflow: hidden;
   background: #0b0f1a;
   border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.meet-video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.meet-video-tile {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b0f1a;
+  min-height: 180px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.meet-video-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meet-video-tile span {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.meet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.meet-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: var(--meet-text);
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meet-control.danger {
+  border-color: rgba(248, 113, 113, 0.6);
+  color: #fca5a5;
 }
 
 .meet-frame iframe {
