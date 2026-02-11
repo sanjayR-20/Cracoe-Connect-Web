@@ -1,0 +1,8 @@
+import { Role } from '@prisma/client';
+export declare class CreateUserDto {
+    name: string;
+    email: string;
+    designation: string;
+    role: Role;
+    profileImage?: string;
+}

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CEO
+  COE
+  COO
+  DEV
+  TESTER
+}
+
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  designation   String
+  role          Role
+  profileImage  String?
+  isActive      Boolean      @default(true)
+  permissions   Permission?
+  tasksAssigned Task[]       @relation("AssignedTo")
+  tasksCreated  Task[]       @relation("AssignedBy")
+  createdAt     DateTime     @default(now())
+}
+
+model Permission {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  canAssignTask   Boolean @default(false)
+  canAnnounce     Boolean @default(false)
+  canAddUser      Boolean @default(false)
+  canRemoveUser   Boolean @default(false)
+  user            User    @relation(fields: [userId], references: [id])
+}
+
+model Task {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  deadline      DateTime
+  priority      String
+  status        String
+  isUrgent      Boolean  @default(false)
+  assignedTo    User     @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId  String
+  assignedBy    User     @relation("AssignedBy", fields: [assignedById], references: [id])
+  assignedById  String
+  createdAt     DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  createdBy String
+  createdAt DateTime @default(now())
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
