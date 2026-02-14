@@ -457,12 +457,20 @@ export const useDataStore = create((set, get) => ({
     });
   },
 
+  canUpdateTaskStatus: () => {
+    const currentUser = get().getCurrentUser();
+    if (!currentUser) return false;
+    const authorizedUsers = ['shri dharshini', 'siva dharana', 'sharvesh'];
+    const normalizedName = currentUser.name.toLowerCase().trim();
+    return authorizedUsers.includes(normalizedName);
+  },
+
   updateTaskStatus: (taskId, newStatus) => {
     const currentUser = get().getCurrentUser();
     const authorizedUsers = ['shri dharshini', 'siva dharana', 'sharvesh'];
     const normalizedName = currentUser?.name.toLowerCase().trim();
     
-    if (!authorizedUsers.some(auth => auth === normalizedName)) {
+    if (!authorizedUsers.includes(normalizedName)) {
       alert('Only Shri Dharshini, Siva Dharana, and Sharvesh can update task status');
       return;
     }

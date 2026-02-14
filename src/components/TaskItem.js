@@ -9,8 +9,10 @@ export default function TaskItem({ task }) {
   const currentUserId = useDataStore((state) => state.currentUserId);
   const canEditAllTasks = useDataStore((state) => state.canEditAllTasks);
   const canManageData = useDataStore((state) => state.canManageData);
+  const canUpdateTaskStatus = useDataStore((state) => state.canUpdateTaskStatus);
 
   const canEdit = canEditAllTasks() || task.assignedToId.includes(currentUserId);
+  const canUpdateStatus = canUpdateTaskStatus();
 
   const handleStatusChange = (newStatus) => {
     updateTaskStatus(task.id, newStatus);
@@ -71,7 +73,7 @@ export default function TaskItem({ task }) {
         </div>
       </div>
 
-      {canEdit && (
+      {canEdit && canUpdateStatus && (
         <div className="task-actions">
           {task.status !== 'In Progress' && (
             <button
