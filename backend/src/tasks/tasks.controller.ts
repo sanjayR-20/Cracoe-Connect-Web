@@ -21,7 +21,7 @@ export class TasksController {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
-    return this.tasksService.updateStatus(id, dto.status);
+  updateStatus(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateStatusDto) {
+    return this.tasksService.updateStatus(id, dto.status, req.user.sub);
   }
 }

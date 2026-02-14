@@ -224,6 +224,12 @@ export default function DashboardScreen() {
             Tasks
           </button>
           <button
+            className={`tab ${activeTab === 'leaderboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('leaderboard')}
+          >
+            Leaderboard
+          </button>
+          <button
             className={`tab ${activeTab === 'messaging' ? 'active' : ''}`}
             onClick={() => setActiveTab('messaging')}
           >
@@ -501,6 +507,38 @@ export default function DashboardScreen() {
                   onAssignTask={() => navigate(`/create-task?assignee=${user.id}`)}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <div className="leaderboard-section">
+            <h2>Team Leaderboard</h2>
+            <p className="leaderboard-subtitle">Points earned by completing tasks</p>
+            <div className="leaderboard-list">
+              {users
+                .slice()
+                .sort((a, b) => (b.points || 0) - (a.points || 0))
+                .map((user, index) => (
+                  <div key={user.id} className="leaderboard-item">
+                    <div className="rank">
+                      {index === 0 && '🥇'}
+                      {index === 1 && '🥈'}
+                      {index === 2 && '🥉'}
+                      {index > 2 && `#${index + 1}`}
+                    </div>
+                    <div className="user-avatar">{user.name.charAt(0)}</div>
+                    <div className="user-details">
+                      <h4>{user.name}</h4>
+                      <p>{user.designation}</p>
+                    </div>
+                    <div className="points">
+                      <span className="points-value">{user.points || 0}</span>
+                      <span className="points-label">points</span>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}

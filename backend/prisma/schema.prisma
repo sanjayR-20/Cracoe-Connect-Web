@@ -23,6 +23,7 @@ model User {
   role          Role
   profileImage  String?
   isActive      Boolean      @default(true)
+  points        Int          @default(0)
   permissions   Permission?
   tasksAssigned Task[]       @relation("AssignedTo")
   tasksCreated  Task[]       @relation("AssignedBy")

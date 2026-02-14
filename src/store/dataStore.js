@@ -52,6 +52,7 @@ const serializeUser = (user) => ({
   designation: user.designation,
   email: user.email,
   permissions: user.permissions,
+  points: user.points || 0,
 });
 
 const serializeTask = (task) => ({
@@ -457,11 +458,34 @@ export const useDataStore = create((set, get) => ({
   },
 
   updateTaskStatus: (taskId, newStatus) => {
+    const currentUser = get().getCurrentUser();
+    const authorizedUsers = ['shri dharshini', 'siva dharana', 'sharvesh'];
+    const normalizedName = currentUser?.name.toLowerCase().trim();
+    
+    if (!authorizedUsers.some(auth => auth === normalizedName)) {
+      alert('Only Shri Dharshini, Siva Dharana, and Sharvesh can update task status');
+      return;
+    }
+
+    const task = get().tasks.find((t) => t.id === taskId);
+    const wasCompleted = task?.status === 'Completed';
+    const isNowCompleted = newStatus === 'Completed';
+
     set((state) => ({
       tasks: state.tasks.map((task) =>
         task.id === taskId ? { ...task, status: newStatus } : task
       ),
     }));
+
+    if (isNowCompleted && !wasCompleted && task) {
+      set((state) => ({
+        users: state.users.map((user) =>
+          task.assignedToId.includes(user.id)
+            ? { ...user, points: (user.points || 0) + 10 }
+            : user
+        ),
+      }));
+    }
 
     if (isSupabaseConfigured()) {
       supabase
@@ -469,9 +493,21 @@ export const useDataStore = create((set, get) => ({
         .update({ status: newStatus })
         .eq('id', taskId)
         .then(({ error }) => error && set({ supabaseError: error.message }));
+
+      if (isNowCompleted && !wasCompleted && task) {
+        task.assignedToId.forEach((userId) => {
+          const user = get().users.find((u) => u.id === userId);
+          if (user) {
+            supabase
+              .from('users')
+              .update({ points: (user.points || 0) + 10 })
+              .eq('id', userId)
+              .then(({ error }) => error && set({ supabaseError: error.message }));
+          }
+        });
+      }
     }
 
-    const task = get().tasks.find((t) => t.id === taskId);
     task?.assignedToId.forEach((userId) => {
       sendNotification('Task Status Updated', `${task.title} is now ${newStatus}`);
     });

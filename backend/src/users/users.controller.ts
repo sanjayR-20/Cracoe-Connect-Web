@@ -16,6 +16,11 @@ export class UsersController {
     return this.usersService.getAll();
   }
 
+  @Get('leaderboard')
+  getLeaderboard() {
+    return this.usersService.getLeaderboard();
+  }
+
   @Post()
   @Roles(Role.CEO)
   create(@Body() dto: CreateUserDto) {

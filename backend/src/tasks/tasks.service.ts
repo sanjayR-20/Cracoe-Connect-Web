@@ -2,6 +2,12 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 
+const TASK_COMPLETION_AUTHORITIES = [
+  'shri dharshini',
+  'siva dharana',
+  'sharvesh'
+];
+
 @Injectable()
 export class TasksService {
   constructor(private prisma: PrismaService) {}
@@ -34,10 +40,45 @@ export class TasksService {
     });
   }
 
-  updateStatus(id: string, status: string) {
-    return this.prisma.task.update({
+  async updateStatus(id: string, status: string, updatedById: string) {
+    const updater = await this.prisma.user.findUnique({
+      where: { id: updatedById },
+    });
+
+    if (!updater) {
+      throw new ForbiddenException('User not found');
+    }
+
+    const normalizedName = updater.name.toLowerCase().trim();
+    const hasAuthority = TASK_COMPLETION_AUTHORITIES.some(
+      auth => auth.toLowerCase() === normalizedName
+    );
+
+    if (!hasAuthority) {
+      throw new ForbiddenException('Only authorized personnel can update task status');
+    }
+
+    const task = await this.prisma.task.findUnique({
+      where: { id },
+      include: { assignedTo: true },
+    });
+
+    if (!task) {
+      throw new ForbiddenException('Task not found');
+    }
+
+    const updatedTask = await this.prisma.task.update({
       where: { id },
       data: { status },
     });
+
+    if (status === 'Completed' && task.status !== 'Completed') {
+      await this.prisma.user.update({
+        where: { id: task.assignedToId },
+        data: { points: { increment: 10 } },
+      });
+    }
+
+    return updatedTask;
   }
 }

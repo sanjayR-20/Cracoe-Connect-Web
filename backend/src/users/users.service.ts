@@ -7,7 +7,23 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   getAll() {
-    return this.prisma.user.findMany({ include: { permissions: true } });
+    return this.prisma.user.findMany({ 
+      include: { permissions: true },
+      orderBy: { points: 'desc' }
+    });
+  }
+
+  getLeaderboard() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        email: true,
+        points: true,
+      },
+      orderBy: { points: 'desc' },
+    });
   }
 
   create(dto: CreateUserDto) {

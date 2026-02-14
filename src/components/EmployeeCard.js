@@ -18,6 +18,7 @@ export default function EmployeeCard({ employee, onViewDetails, onAssignTask }) 
       <div className="card-header">
         <div className="avatar">{employee.name.charAt(0)}</div>
         <div className="designation-badge">{employee.designation}</div>
+        <div className="points-badge">{employee.points || 0} pts</div>
       </div>
 
       <div className="card-content">
