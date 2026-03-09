@@ -13,7 +13,6 @@ export default function LoginScreen() {
   const users = useDataStore((state) => state.users);
   const supabaseLoading = useDataStore((state) => state.supabaseLoading);
   const supabaseError = useDataStore((state) => state.supabaseError);
-  const getUser = useDataStore((state) => state.getUser);
 
   const handleLogin = async (e) => {
     e.preventDefault();

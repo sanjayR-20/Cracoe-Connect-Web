@@ -14,13 +14,6 @@ export default function TaskItem({ task }) {
   const canEdit = canEditAllTasks() || task.assignedToId.includes(currentUserId);
   const canUpdateStatus = canUpdateTaskStatus();
 
-  // Points reference
-  const difficultyPoints = {
-    easy: 10,
-    medium: 15,
-    hard: 30,
-  };
-
   const handleStatusChange = (newStatus) => {
     updateTaskStatus(task.id, newStatus);
   };
