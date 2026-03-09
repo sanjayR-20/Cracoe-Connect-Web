@@ -37,7 +37,8 @@ export default function LoginScreen() {
         (u) => u.username === username.trim().toLowerCase()
       );
       
-      if (loggedInUser && !loggedInUser.profileCompleted) {
+      // CEO (admin) always goes to dashboard, others need profile setup if not completed
+      if (loggedInUser && !loggedInUser.profileCompleted && loggedInUser.designation !== 'CEO') {
         navigate('/profile-setup');
       } else {
         navigate('/dashboard');

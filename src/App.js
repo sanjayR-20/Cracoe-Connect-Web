@@ -21,7 +21,8 @@ function ProtectedRoute({ children }) {
   const currentUser = getCurrentUser();
   
   // Check if profile is completed, redirect to profile setup if not
-  if (currentUser && !currentUser.profileCompleted) {
+  // CEO (admin) is always considered to have completed profile
+  if (currentUser && !currentUser.profileCompleted && currentUser.designation !== 'CEO') {
     return <Navigate to="/profile-setup" replace />;
   }
 
