@@ -278,3 +278,68 @@
     gap: 10px;
   }
 }
+
+/* Permission Selection for New User */
+.permission-selection {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+.permission-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.permission-toggle-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.new-user-permissions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.permission-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.permission-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.permission-checkbox input[type="checkbox"]:checked + span {
+  color: #667eea;
+}

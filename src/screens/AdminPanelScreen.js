@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/AdminPanel.css';
-import { ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function AdminPanelScreen() {
   const navigate = useNavigate();
@@ -13,14 +13,28 @@ export default function AdminPanelScreen() {
   const addUser = useDataStore((state) => state.addUser);
   const removeUser = useDataStore((state) => state.removeUser);
 
+  const defaultPermissions = {
+    canAssignTasks: false,
+    canViewAdmin: false,
+    canManageTeam: false,
+    canViewAllTasks: false,
+    canEditAllTasks: false,
+    canAnnounce: false,
+    canSchedule: false,
+    canViewMeetingMinutes: false,
+    canManageMeetingMinutes: false,
+  };
+
   const [newUser, setNewUser] = useState({
     name: '',
     username: '',
     password: '',
     designation: 'Developer',
     email: '',
+    permissions: { ...defaultPermissions },
   });
   const [userError, setUserError] = useState('');
+  const [showPermissions, setShowPermissions] = useState(false);
 
   const currentUser = getCurrentUser();
 
@@ -148,11 +162,31 @@ export default function AdminPanelScreen() {
       password: newUser.password.trim(),
       designation: newUser.designation,
       email: newUser.email.trim(),
-      permissions: buildPermissions(newUser.designation),
+      permissions: newUser.permissions,
+      profileCompleted: false,
+      points: 0,
     };
 
     addUser(user);
-    setNewUser({ name: '', username: '', password: '', designation: 'Developer', email: '' });
+    setNewUser({ 
+      name: '', 
+      username: '', 
+      password: '', 
+      designation: 'Developer', 
+      email: '',
+      permissions: { ...defaultPermissions },
+    });
+    setShowPermissions(false);
+  };
+
+  const handleNewUserPermissionToggle = (permissionKey) => {
+    setNewUser({
+      ...newUser,
+      permissions: {
+        ...newUser.permissions,
+        [permissionKey]: !newUser.permissions[permissionKey],
+      },
+    });
   };
 
   return (
@@ -204,6 +238,35 @@ export default function AdminPanelScreen() {
               <option>Marketing Lead</option>
               <option>Developer</option>
             </select>
+
+            {/* Permission Selection Section */}
+            <div className="permission-selection">
+              <button 
+                type="button" 
+                className="permission-toggle-btn"
+                onClick={() => setShowPermissions(!showPermissions)}
+              >
+                Set Permissions {showPermissions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              
+              {showPermissions && (
+                <div className="new-user-permissions">
+                  {Object.entries(permissionLabels).map(([key, label]) => (
+                    <div key={key} className="permission-checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={newUser.permissions[key]}
+                          onChange={() => handleNewUserPermissionToggle(key)}
+                        />
+                        {label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button className="btn-primary" onClick={handleAddUser}>
               Add Employee
             </button>

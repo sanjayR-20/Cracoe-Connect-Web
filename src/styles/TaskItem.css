@@ -58,6 +58,18 @@
   color: white;
 }
 
+.difficulty-badge {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+}
+
 .task-meta {
   display: flex;
   gap: 20px;
@@ -132,6 +144,16 @@
 
 .action-btn.delete:hover {
   background: #fecaca;
+}
+
+.action-btn.not-completed {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.action-btn.not-completed:hover {
+  background: #fee2e2;
 }
 
 @media (max-width: 600px) {

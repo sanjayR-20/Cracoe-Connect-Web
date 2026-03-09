@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDataStore } from '../store/dataStore';
 import '../styles/TaskItem.css';
-import { Play, CheckCircle, Clock } from 'lucide-react';
+import { Play, CheckCircle, Clock, XCircle, Star } from 'lucide-react';
 
 export default function TaskItem({ task }) {
   const updateTaskStatus = useDataStore((state) => state.updateTaskStatus);
@@ -13,6 +13,13 @@ export default function TaskItem({ task }) {
 
   const canEdit = canEditAllTasks() || task.assignedToId.includes(currentUserId);
   const canUpdateStatus = canUpdateTaskStatus();
+
+  // Points reference
+  const difficultyPoints = {
+    easy: 10,
+    medium: 15,
+    hard: 30,
+  };
 
   const handleStatusChange = (newStatus) => {
     updateTaskStatus(task.id, newStatus);
@@ -41,10 +48,30 @@ export default function TaskItem({ task }) {
         return '#3b82f6';
       case 'Pending':
         return '#f59e0b';
+      case 'Not Completed':
+        return '#ef4444';
       default:
         return '#666';
     }
   };
+
+  const getDifficultyLabel = (difficulty) => {
+    switch (difficulty) {
+      case 'easy':
+        return { label: 'Easy', color: '#10b981', points: 10 };
+      case 'medium':
+        return { label: 'Medium', color: '#f59e0b', points: 15 };
+      case 'hard':
+        return { label: 'Hard', color: '#ef4444', points: 30 };
+      default:
+        return { label: 'Medium', color: '#f59e0b', points: 15 };
+    }
+  };
+
+  const difficultyInfo = getDifficultyLabel(task.difficulty);
+
+  // Check if task is past deadline
+  const isPastDeadline = new Date(task.deadline) < new Date();
 
   return (
     <div className="task-item">
@@ -56,6 +83,10 @@ export default function TaskItem({ task }) {
         <div className="task-badges">
           <span className="priority-badge" style={{ borderColor: getPriorityColor(task.priority) }}>
             {task.priority}
+          </span>
+          <span className="difficulty-badge" style={{ borderColor: difficultyInfo.color }}>
+            <Star size={12} />
+            {difficultyInfo.label} ({difficultyInfo.points} pts)
           </span>
           <span className="status-badge" style={{ backgroundColor: getStatusColor(task.status) }}>
             {task.status}
@@ -75,7 +106,7 @@ export default function TaskItem({ task }) {
 
       {canEdit && canUpdateStatus && (
         <div className="task-actions">
-          {task.status !== 'In Progress' && (
+          {task.status !== 'In Progress' && task.status !== 'Completed' && task.status !== 'Not Completed' && (
             <button
               className="action-btn start"
               onClick={() => handleStatusChange('In Progress')}
@@ -85,7 +116,7 @@ export default function TaskItem({ task }) {
               Start
             </button>
           )}
-          {task.status !== 'Completed' && (
+          {task.status !== 'Completed' && task.status !== 'Not Completed' && (
             <button
               className="action-btn complete"
               onClick={() => handleStatusChange('Completed')}
@@ -95,7 +126,17 @@ export default function TaskItem({ task }) {
               Complete
             </button>
           )}
-          {task.status === 'Completed' && (
+          {task.status !== 'Completed' && task.status !== 'Not Completed' && isPastDeadline && (
+            <button
+              className="action-btn not-completed"
+              onClick={() => handleStatusChange('Not Completed')}
+              title="Mark as Not Completed (deducts points)"
+            >
+              <XCircle size={16} />
+              Not Completed
+            </button>
+          )}
+          {(task.status === 'Completed' || task.status === 'Not Completed') && (
             <button
               className="action-btn reset"
               onClick={() => handleStatusChange('Pending')}

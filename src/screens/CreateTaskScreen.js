@@ -10,6 +10,7 @@ export default function CreateTaskScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
+  const [difficulty, setDifficulty] = useState('medium');
   const [deadline, setDeadline] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [error, setError] = useState('');
@@ -20,6 +21,13 @@ export default function CreateTaskScreen() {
   const getCurrentUser = useDataStore((state) => state.getCurrentUser);
 
   const currentUser = getCurrentUser();
+
+  // Points reference for display
+  const difficultyPoints = {
+    easy: 10,
+    medium: 15,
+    hard: 30,
+  };
 
   useEffect(() => {
     const assignee = searchParams.get('assignee');
@@ -74,7 +82,7 @@ export default function CreateTaskScreen() {
       return;
     }
 
-    createTask(title, description, priority, deadline, selectedUsers);
+    createTask(title, description, priority, deadline, selectedUsers, difficulty);
     alert('Task created successfully and assigned to selected team members');
     navigate('/dashboard');
   };
@@ -135,6 +143,36 @@ export default function CreateTaskScreen() {
               onChange={(e) => setDeadline(e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="difficulty">Difficulty (Points) *</label>
+          <div className="difficulty-selector">
+            <button
+              type="button"
+              className={`difficulty-btn easy ${difficulty === 'easy' ? 'selected' : ''}`}
+              onClick={() => setDifficulty('easy')}
+            >
+              Easy ({difficultyPoints.easy} pts)
+            </button>
+            <button
+              type="button"
+              className={`difficulty-btn medium ${difficulty === 'medium' ? 'selected' : ''}`}
+              onClick={() => setDifficulty('medium')}
+            >
+              Medium ({difficultyPoints.medium} pts)
+            </button>
+            <button
+              type="button"
+              className={`difficulty-btn hard ${difficulty === 'hard' ? 'selected' : ''}`}
+              onClick={() => setDifficulty('hard')}
+            >
+              Hard ({difficultyPoints.hard} pts)
+            </button>
+          </div>
+          <p className="difficulty-hint">
+            Points are awarded for completing tasks on time. Points are deducted if not completed by deadline.
+          </p>
         </div>
 
         <div className="form-group">

@@ -7,13 +7,40 @@ import EmployeeDetailScreen from './screens/EmployeeDetailScreen';
 import CreateTaskScreen from './screens/CreateTaskScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
 import VideoMeetScreen from './screens/VideoMeetScreen';
+import ProfileSetupScreen from './screens/ProfileSetupScreen';
 import './styles/index.css';
 
 function ProtectedRoute({ children }) {
   const currentUserId = useDataStore((state) => state.currentUserId);
+  const getCurrentUser = useDataStore((state) => state.getCurrentUser);
 
   if (!currentUserId) {
     return <Navigate to="/" replace />;
+  }
+
+  const currentUser = getCurrentUser();
+  
+  // Check if profile is completed, redirect to profile setup if not
+  if (currentUser && !currentUser.profileCompleted) {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  return children;
+}
+
+function ProfileSetupRoute({ children }) {
+  const currentUserId = useDataStore((state) => state.currentUserId);
+  const getCurrentUser = useDataStore((state) => state.getCurrentUser);
+
+  if (!currentUserId) {
+    return <Navigate to="/" replace />;
+  }
+
+  const currentUser = getCurrentUser();
+  
+  // If profile is already completed, redirect to dashboard
+  if (currentUser && currentUser.profileCompleted) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -34,6 +61,14 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LoginScreen />} />
+        <Route
+          path="/profile-setup"
+          element={
+            <ProfileSetupRoute>
+              <ProfileSetupScreen />
+            </ProfileSetupRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={

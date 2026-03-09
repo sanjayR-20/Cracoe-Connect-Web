@@ -53,7 +53,55 @@ const serializeUser = (user) => ({
   email: user.email,
   permissions: user.permissions,
   points: user.points || 0,
+  profile_completed: user.profileCompleted || false,
+  profile_photo: user.profilePhoto || null,
+  location: user.location || null,
+  gender: user.gender || null,
+  nationality: user.nationality || null,
+  known_languages: user.knownLanguages || [],
+  short_bio: user.shortBio || null,
+  education: user.education || null,
+  phone: user.phone || null,
+  github: user.github || null,
+  linkedin: user.linkedin || null,
+  skills: user.skills || [],
+  projects_done: user.projectsDone || [],
+  interests: user.interests || [],
+  experience: user.experience || null,
 });
+
+const deserializeUser = (row) => ({
+  id: row.id,
+  username: row.username,
+  password: row.password,
+  name: row.name,
+  designation: row.designation,
+  email: row.email,
+  permissions: row.permissions,
+  points: row.points || 0,
+  profileCompleted: row.profile_completed || false,
+  profilePhoto: row.profile_photo || null,
+  location: row.location || null,
+  gender: row.gender || null,
+  nationality: row.nationality || null,
+  knownLanguages: row.known_languages || [],
+  shortBio: row.short_bio || null,
+  education: row.education || null,
+  phone: row.phone || null,
+  github: row.github || null,
+  linkedin: row.linkedin || null,
+  skills: row.skills || [],
+  projectsDone: row.projects_done || [],
+  interests: row.interests || [],
+  experience: row.experience || null,
+});
+
+// Points based on task difficulty
+const DIFFICULTY_POINTS = {
+  easy: 10,
+  medium: 15,
+  hard: 30,
+};
 
 const serializeTask = (task) => ({
   id: task.id,
@@ -64,6 +112,7 @@ const serializeTask = (task) => ({
   status: task.status,
   assigned_to_id: task.assignedToId,
   created_by: task.createdBy,
+  difficulty: task.difficulty || 'medium',
 });
 
 const deserializeTask = (row) => ({
@@ -75,6 +124,7 @@ const deserializeTask = (row) => ({
   status: row.status,
   assignedToId: row.assigned_to_id || [],
   createdBy: row.created_by,
+  difficulty: row.difficulty || 'medium',
 });
 
 const serializeAnnouncement = (announcement) => ({
@@ -195,7 +245,7 @@ export const useDataStore = create((set, get) => ({
         );
       }
 
-      let users = usersRes.data || [];
+      let users = (usersRes.data || []).map(deserializeUser);
       let tasks = (tasksRes.data || []).map(deserializeTask);
       const announcements = (announcementsRes.data || []).map(deserializeAnnouncement);
       const schedule = (scheduleRes.data || []).map(deserializeSchedule);
@@ -275,7 +325,8 @@ export const useDataStore = create((set, get) => ({
 
         const userRow = payload.new;
         if (!userRow) return;
-        set((state) => ({ users: upsertById(state.users, userRow) }));
+        const user = deserializeUser(userRow);
+        set((state) => ({ users: upsertById(state.users, user) }));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
         if (payload.eventType === 'DELETE') {
@@ -428,7 +479,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   // Task operations
-  createTask: (title, description, priority, deadline, assignedTo) => {
+  createTask: (title, description, priority, deadline, assignedTo, difficulty = 'medium') => {
     const now = Date.now();
     const newTasks = assignedTo.map((userId) => ({
       id: `task_${now}_${userId}_${Math.random()}`,
@@ -439,6 +490,7 @@ export const useDataStore = create((set, get) => ({
       status: 'Pending',
       assignedToId: [userId],
       createdBy: get().currentUserId,
+      difficulty: difficulty,
     }));
 
     set((state) => ({
@@ -478,6 +530,16 @@ export const useDataStore = create((set, get) => ({
     const task = get().tasks.find((t) => t.id === taskId);
     const wasCompleted = task?.status === 'Completed';
     const isNowCompleted = newStatus === 'Completed';
+    const isNotCompleted = newStatus === 'Not Completed';
+
+    // Calculate points based on difficulty
+    const difficulty = task?.difficulty || 'medium';
+    const pointsValue = DIFFICULTY_POINTS[difficulty] || 15;
+
+    // Check if task is completed within deadline
+    const deadline = new Date(task?.deadline);
+    const now = new Date();
+    const isOnTime = now <= deadline;
 
     set((state) => ({
       tasks: state.tasks.map((task) =>
@@ -485,11 +547,23 @@ export const useDataStore = create((set, get) => ({
       ),
     }));
 
-    if (isNowCompleted && !wasCompleted && task) {
+    // Award points if completed on time
+    if (isNowCompleted && !wasCompleted && task && isOnTime) {
       set((state) => ({
         users: state.users.map((user) =>
           task.assignedToId.includes(user.id)
-            ? { ...user, points: (user.points || 0) + 10 }
+            ? { ...user, points: (user.points || 0) + pointsValue }
+            : user
+        ),
+      }));
+    }
+
+    // Deduct points if not completed by deadline
+    if (isNotCompleted && task) {
+      set((state) => ({
+        users: state.users.map((user) =>
+          task.assignedToId.includes(user.id)
+            ? { ...user, points: Math.max(0, (user.points || 0) - pointsValue) }
             : user
         ),
       }));
@@ -502,13 +576,28 @@ export const useDataStore = create((set, get) => ({
         .eq('id', taskId)
         .then(({ error }) => error && set({ supabaseError: error.message }));
 
-      if (isNowCompleted && !wasCompleted && task) {
+      // Update points in Supabase for completed tasks on time
+      if (isNowCompleted && !wasCompleted && task && isOnTime) {
         task.assignedToId.forEach((userId) => {
           const user = get().users.find((u) => u.id === userId);
           if (user) {
             supabase
               .from('users')
-              .update({ points: (user.points || 0) + 10 })
+              .update({ points: user.points })
+              .eq('id', userId)
+              .then(({ error }) => error && set({ supabaseError: error.message }));
+          }
+        });
+      }
+
+      // Update points in Supabase for not completed tasks
+      if (isNotCompleted && task) {
+        task.assignedToId.forEach((userId) => {
+          const user = get().users.find((u) => u.id === userId);
+          if (user) {
+            supabase
+              .from('users')
+              .update({ points: user.points })
               .eq('id', userId)
               .then(({ error }) => error && set({ supabaseError: error.message }));
           }
@@ -835,6 +924,50 @@ export const useDataStore = create((set, get) => ({
         .from('users')
         .insert(serializeUser(user))
         .then(({ error }) => error && set({ supabaseError: error.message }));
+    }
+  },
+
+  updateUserProfile: async (userId, profileData) => {
+    // Update local state
+    set((state) => ({
+      users: state.users.map((user) =>
+        user.id === userId
+          ? { ...user, ...profileData }
+          : user
+      ),
+    }));
+
+    // Update in Supabase
+    if (isSupabaseConfigured()) {
+      const serializedProfile = {
+        name: profileData.name,
+        profile_completed: profileData.profileCompleted,
+        profile_photo: profileData.profilePhoto,
+        location: profileData.location,
+        gender: profileData.gender,
+        nationality: profileData.nationality,
+        known_languages: profileData.knownLanguages,
+        short_bio: profileData.shortBio,
+        education: profileData.education,
+        email: profileData.email,
+        phone: profileData.phone,
+        github: profileData.github,
+        linkedin: profileData.linkedin,
+        skills: profileData.skills,
+        projects_done: profileData.projectsDone,
+        interests: profileData.interests,
+        experience: profileData.experience,
+      };
+
+      const { error } = await supabase
+        .from('users')
+        .update(serializedProfile)
+        .eq('id', userId);
+
+      if (error) {
+        set({ supabaseError: error.message });
+        throw error;
+      }
     }
   },
 

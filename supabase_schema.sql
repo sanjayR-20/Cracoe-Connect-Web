@@ -7,7 +7,23 @@ create table if not exists public.users (
   name text not null,
   designation text not null,
   email text not null,
-  permissions jsonb not null
+  permissions jsonb not null,
+  points integer default 0,
+  profile_completed boolean default false,
+  profile_photo text,
+  location text,
+  gender text,
+  nationality text,
+  known_languages text[],
+  short_bio text,
+  education text,
+  phone text,
+  github text,
+  linkedin text,
+  skills text[],
+  projects_done text[],
+  interests text[],
+  experience text
 );
 
 create table if not exists public.tasks (
@@ -18,7 +34,8 @@ create table if not exists public.tasks (
   deadline text not null,
   status text not null,
   assigned_to_id text[] not null,
-  created_by text not null
+  created_by text not null,
+  difficulty text default 'medium'
 );
 
 create table if not exists public.announcements (

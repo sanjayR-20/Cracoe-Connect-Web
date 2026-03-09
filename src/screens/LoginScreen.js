@@ -13,6 +13,7 @@ export default function LoginScreen() {
   const users = useDataStore((state) => state.users);
   const supabaseLoading = useDataStore((state) => state.supabaseLoading);
   const supabaseError = useDataStore((state) => state.supabaseError);
+  const getUser = useDataStore((state) => state.getUser);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,7 +33,16 @@ export default function LoginScreen() {
     }
 
     if (authenticate(username.trim(), password)) {
-      navigate('/dashboard');
+      // Find the logged in user and check if profile is completed
+      const loggedInUser = users.find(
+        (u) => u.username === username.trim().toLowerCase()
+      );
+      
+      if (loggedInUser && !loggedInUser.profileCompleted) {
+        navigate('/profile-setup');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError('Invalid username or password');
     }
@@ -40,16 +50,7 @@ export default function LoginScreen() {
   };
 
   const demoCredentials = [
-    { username: 'sharvesh', password: 'S@rvesh*&^2026', role: 'CEO' },
-    { username: 'sivadharana', password: 'Siv@dh@r@na$^2026', role: 'COO' },
-    { username: 'shridharshini', password: 'Shr!Dh@r$hini&2026', role: 'CTO' },
-    { username: 'sanjay', password: 'S@nJ@y*^&2026', role: 'CFO' },
-    { username: 'sakthivel', password: 'S@kth!v3l$^2026', role: 'Manager' },
-    { username: 'shanmugavel', password: 'Sh@nMug@vel*&2026', role: 'Developer' },
-    { username: 'shreevardhann', password: 'Shr33V@rdh@nn$2026', role: 'Developer' },
-    { username: 'shalini', password: 'Sh@l!n!^&2026', role: 'Developer' },
-    { username: 'sreejith', password: 'Sre3j!th@*2026', role: 'Manager' },
-    { username: 'sujithra', password: 'Suj!thr@*&2026', role: 'Developer' },
+    { username: 'sharvesh', password: 'S@rvesh*&^2026', role: 'CEO (Admin)' },
   ];
 
   const handleDemoLogin = (demoUsername, demoPassword) => {
