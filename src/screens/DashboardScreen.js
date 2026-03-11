@@ -13,7 +13,6 @@ import {
   Send,
   Plus,
   Video,
-  User,
   Settings,
 } from 'lucide-react';
 
