@@ -33,7 +33,11 @@ export default function EmployeeDetailScreen() {
 
       <div className="detail-content">
         <div className="employee-header">
-          <div className="employee-avatar">{employee.name.charAt(0)}</div>
+          {employee.profilePhoto ? (
+            <img src={employee.profilePhoto} alt={employee.name} className="employee-avatar-img" />
+          ) : (
+            <div className="employee-avatar">{employee.name.charAt(0)}</div>
+          )}
           <div className="employee-info">
             <h1>{employee.name}</h1>
             <p className="designation">{employee.designation}</p>

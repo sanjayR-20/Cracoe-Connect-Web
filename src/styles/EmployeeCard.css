@@ -38,6 +38,15 @@
   flex-shrink: 0;
 }
 
+.avatar-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
 .designation-badge {
   background: rgba(255, 255, 255, 0.2);
   color: white;

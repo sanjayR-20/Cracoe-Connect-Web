@@ -13,12 +13,19 @@ export default function EmployeeCard({ employee, onViewDetails, onAssignTask }) 
   const pendingTasks = tasks.filter((t) => t.status === 'Pending').length;
   const inProgressTasks = tasks.filter((t) => t.status === 'In Progress').length;
 
+  // Hide points for CEO and COO
+  const showPoints = !['CEO', 'COO'].includes(employee.designation);
+
   return (
     <div className="employee-card">
       <div className="card-header">
-        <div className="avatar">{employee.name.charAt(0)}</div>
+        {employee.profilePhoto ? (
+          <img src={employee.profilePhoto} alt={employee.name} className="avatar-img" />
+        ) : (
+          <div className="avatar">{employee.name.charAt(0)}</div>
+        )}
         <div className="designation-badge">{employee.designation}</div>
-        <div className="points-badge">{employee.points || 0} pts</div>
+        {showPoints && <div className="points-badge">{employee.points || 0} pts</div>}
       </div>
 
       <div className="card-content">

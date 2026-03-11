@@ -49,16 +49,6 @@ export default function LoginScreen() {
     setLoading(false);
   };
 
-  const demoCredentials = [
-    { username: 'sharvesh', password: 'S@rvesh*&^2026', role: 'CEO (Admin)' },
-  ];
-
-  const handleDemoLogin = (demoUsername, demoPassword) => {
-    setUsername(demoUsername);
-    setPassword(demoPassword);
-    setError('');
-  };
-
   return (
     <div className="login-container">
       <div className="login-wrapper">
@@ -100,23 +90,6 @@ export default function LoginScreen() {
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
-
-          <div className="demo-section">
-            <h3>Demo Credentials</h3>
-            <div className="demo-grid">
-              {demoCredentials.map((cred, idx) => (
-                <button
-                  key={idx}
-                  className="demo-button"
-                  onClick={() => handleDemoLogin(cred.username, cred.password)}
-                  type="button"
-                >
-                  <span className="role-badge">{cred.role}</span>
-                  {cred.username}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

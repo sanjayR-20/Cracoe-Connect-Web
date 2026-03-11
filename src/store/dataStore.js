@@ -1019,4 +1019,75 @@ export const useDataStore = create((set, get) => ({
       });
     }
   },
+
+  // Change password for a user
+  changePassword: async (userId, currentPassword, newPassword) => {
+    const user = get().users.find((u) => u.id === userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.password !== currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Update local state
+    set((state) => ({
+      users: state.users.map((u) =>
+        u.id === userId ? { ...u, password: newPassword } : u
+      ),
+    }));
+
+    // Update in Supabase
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase
+        .from('users')
+        .update({ password: newPassword })
+        .eq('id', userId);
+
+      if (error) {
+        set({ supabaseError: error.message });
+        throw error;
+      }
+    }
+
+    return true;
+  },
+
+  // Admin function to update user points
+  updateUserPoints: async (userId, pointsChange) => {
+    const currentUser = get().getCurrentUser();
+    if (currentUser?.designation !== 'CEO') {
+      throw new Error('Only CEO can adjust points');
+    }
+
+    const user = get().users.find((u) => u.id === userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const newPoints = Math.max(0, (user.points || 0) + pointsChange);
+
+    // Update local state
+    set((state) => ({
+      users: state.users.map((u) =>
+        u.id === userId ? { ...u, points: newPoints } : u
+      ),
+    }));
+
+    // Update in Supabase
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase
+        .from('users')
+        .update({ points: newPoints })
+        .eq('id', userId);
+
+      if (error) {
+        set({ supabaseError: error.message });
+        throw error;
+      }
+    }
+
+    return newPoints;
+  },
 }));

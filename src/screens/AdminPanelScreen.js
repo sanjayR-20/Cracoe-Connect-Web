@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/AdminPanel.css';
-import { ArrowLeft, Lock, Unlock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
 
 export default function AdminPanelScreen() {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ export default function AdminPanelScreen() {
   const getUser = useDataStore((state) => state.getUser);
   const addUser = useDataStore((state) => state.addUser);
   const removeUser = useDataStore((state) => state.removeUser);
+  const updateUserPoints = useDataStore((state) => state.updateUserPoints);
 
   const defaultPermissions = {
     canAssignTasks: false,
@@ -205,39 +206,78 @@ export default function AdminPanelScreen() {
         </div>
 
         <div className="permissions-management">
-          {users.map((user) => (
-            <div key={user.id} className="user-permission-card">
-              <div className="user-header">
-                <div className="user-avatar">{user.name.charAt(0)}</div>
-                <div className="user-name-role">
-                  <h3>{user.name}</h3>
-                  <p>{user.designation}</p>
-                </div>
-                {user.designation !== 'CEO' && (
-                  <button
-                    className="remove-user-btn"
-                    onClick={() => removeUser(user.id)}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
+          {users.map((user) => {
+            const showPoints = !['CEO', 'COO'].includes(user.designation);
+            
+            const handleAddPoints = async () => {
+              try {
+                await updateUserPoints(user.id, 10);
+              } catch (error) {
+                alert(error.message);
+              }
+            };
 
-              <div className="permissions-toggles">
-                {Object.entries(permissionLabels).map(([key, label]) => (
-                  <div key={key} className="permission-toggle">
-                    <label>{label}</label>
-                    <button
-                      className={`toggle-switch ${user.permissions[key] ? 'active' : ''}`}
-                      onClick={() => handlePermissionToggle(user.id, key)}
-                    >
-                      {user.permissions[key] ? <Unlock size={16} /> : <Lock size={16} />}
-                    </button>
+            const handleSubtractPoints = async () => {
+              try {
+                await updateUserPoints(user.id, -10);
+              } catch (error) {
+                alert(error.message);
+              }
+            };
+
+            return (
+              <div key={user.id} className="user-permission-card">
+                <div className="user-header">
+                  {user.profilePhoto ? (
+                    <img src={user.profilePhoto} alt={user.name} className="user-avatar-img" />
+                  ) : (
+                    <div className="user-avatar">{user.name.charAt(0)}</div>
+                  )}
+                  <div className="user-name-role">
+                    <h3>{user.name}</h3>
+                    <p>{user.designation}</p>
                   </div>
-                ))}
+                  {user.designation !== 'CEO' && (
+                    <button
+                      className="remove-user-btn"
+                      onClick={() => removeUser(user.id)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {/* Points Management for non-CEO/COO */}
+                {showPoints && (
+                  <div className="points-management">
+                    <span className="points-label">Points: {user.points || 0}</span>
+                    <div className="points-controls">
+                      <button className="points-btn subtract" onClick={handleSubtractPoints}>
+                        <Minus size={16} />
+                      </button>
+                      <button className="points-btn add" onClick={handleAddPoints}>
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="permissions-toggles">
+                  {Object.entries(permissionLabels).map(([key, label]) => (
+                    <div key={key} className="permission-toggle">
+                      <label>{label}</label>
+                      <button
+                        className={`toggle-switch ${user.permissions[key] ? 'active' : ''}`}
+                        onClick={() => handlePermissionToggle(user.id, key)}
+                      >
+                        {user.permissions[key] ? <Unlock size={16} /> : <Lock size={16} />}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

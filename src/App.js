@@ -8,6 +8,7 @@ import CreateTaskScreen from './screens/CreateTaskScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
 import VideoMeetScreen from './screens/VideoMeetScreen';
 import ProfileSetupScreen from './screens/ProfileSetupScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import './styles/index.css';
 
 function ProtectedRoute({ children }) {
@@ -107,6 +108,14 @@ function App() {
           element={
             <ProtectedRoute>
               <VideoMeetScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfileScreen />
             </ProtectedRoute>
           }
         />

@@ -13,6 +13,8 @@ import {
   Send,
   Plus,
   Video,
+  User,
+  Settings,
 } from 'lucide-react';
 
 export default function DashboardScreen() {
@@ -189,8 +191,20 @@ export default function DashboardScreen() {
         <div className="header-content">
           <h1>Dashboard</h1>
           <div className="header-user-info">
-            <span>{currentUser?.name}</span>
+            <button onClick={() => navigate('/profile')} className="profile-link">
+              {currentUser?.profilePhoto ? (
+                <img src={currentUser.profilePhoto} alt={currentUser.name} className="header-avatar-img" />
+              ) : (
+                <div className="header-avatar">{currentUser?.name?.charAt(0)}</div>
+              )}
+              <span>{currentUser?.name}</span>
+            </button>
             <span className="user-role">{currentUser?.designation}</span>
+            {currentUser?.designation === 'CEO' && (
+              <button onClick={() => navigate('/admin')} className="admin-btn" title="Admin Panel">
+                <Settings size={18} />
+              </button>
+            )}
             <button onClick={handleLogout} className="logout-btn">
               <LogOut size={18} />
             </button>
@@ -518,6 +532,7 @@ export default function DashboardScreen() {
             <p className="leaderboard-subtitle">Points earned by completing tasks</p>
             <div className="leaderboard-list">
               {users
+                .filter((user) => !['CEO', 'COO'].includes(user.designation))
                 .slice()
                 .sort((a, b) => (b.points || 0) - (a.points || 0))
                 .map((user, index) => (
@@ -528,7 +543,11 @@ export default function DashboardScreen() {
                       {index === 2 && '🥉'}
                       {index > 2 && `#${index + 1}`}
                     </div>
-                    <div className="user-avatar">{user.name.charAt(0)}</div>
+                    {user.profilePhoto ? (
+                      <img src={user.profilePhoto} alt={user.name} className="user-avatar-img" />
+                    ) : (
+                      <div className="user-avatar">{user.name.charAt(0)}</div>
+                    )}
                     <div className="user-details">
                       <h4>{user.name}</h4>
                       <p>{user.designation}</p>
