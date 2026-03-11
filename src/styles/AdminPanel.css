@@ -14,7 +14,8 @@
 
 .admin-header h1 {
   font-size: 28px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 900;
   flex: 1;
 }
 
@@ -24,21 +25,18 @@
 }
 
 .add-employee {
-  border-radius: 16px;
+  border-radius: var(--radius-main);
   padding: 24px;
   margin-bottom: 24px;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .add-employee h2 {
   font-size: 18px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 700;
   margin-bottom: 16px;
 }
 
@@ -51,55 +49,54 @@
 .add-employee-form input,
 .add-employee-form select {
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   font-size: 13px;
-  
-  /* Glassmorphism input */
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
+  color: var(--charcoal);
 }
 
 .add-employee-form input::placeholder {
-  color: #64748b;
+  color: var(--gray-green);
 }
 
 .add-employee-form select option {
-  background: #1a1a2e;
-  color: #e2e8f0;
+  background: var(--white);
+  color: var(--charcoal);
 }
 
 .add-employee-form input:focus,
 .add-employee-form select:focus {
   outline: none;
-  border-color: rgba(102, 126, 234, 0.5);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: var(--charcoal);
+  box-shadow: 0 0 0 3px rgba(23, 30, 25, 0.1);
 }
 
 .add-employee .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--vibrant-red);
+  color: var(--white);
   border: none;
   padding: 12px 18px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-red);
 }
 
 .add-employee .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(202, 0, 19, 0.4);
 }
 
 .add-employee .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: rgba(202, 0, 19, 0.08);
+  color: var(--vibrant-red);
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   font-size: 12px;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--vibrant-red);
 }
 
 .add-employee .error-message {
@@ -109,51 +106,49 @@
 .access-denied {
   max-width: 500px;
   margin: 100px auto;
-  border-radius: 16px;
+  border-radius: var(--radius-main);
   padding: 60px 40px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .access-denied svg {
-  color: #f87171;
+  color: var(--vibrant-red);
 }
 
 .access-denied h2 {
-  color: #e2e8f0;
+  color: var(--charcoal);
   font-size: 24px;
+  font-weight: 900;
 }
 
 .access-denied p {
-  color: #94a3b8;
+  color: var(--gray-green);
   font-size: 16px;
 }
 
 .access-denied button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--vibrant-red);
+  color: var(--white);
   border: none;
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s;
+  font-weight: 700;
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-red);
 }
 
 .access-denied button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(202, 0, 19, 0.4);
 }
 
 .permissions-management {
@@ -163,21 +158,17 @@
 }
 
 .user-permission-card {
-  border-radius: 16px;
+  border-radius: var(--radius-nested);
   padding: 20px;
-  transition: all 0.3s;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-base);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .user-permission-card:hover {
-  border-color: rgba(102, 126, 234, 0.3);
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+  border-color: var(--charcoal);
+  box-shadow: var(--shadow-card);
 }
 
 .user-header {
@@ -186,37 +177,37 @@
   gap: 12px;
   margin-bottom: 20px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--gray-green-30);
 }
 
 .remove-user-btn {
   margin-left: auto;
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(202, 0, 19, 0.08);
+  color: var(--vibrant-red);
+  border: 1px solid rgba(202, 0, 19, 0.3);
   padding: 6px 10px;
   border-radius: 8px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: var(--transition-base);
 }
 
 .remove-user-btn:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(202, 0, 19, 0.15);
+  border-color: rgba(202, 0, 19, 0.5);
 }
 
 .user-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--charcoal);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 900;
   font-size: 20px;
   flex-shrink: 0;
 }
@@ -226,13 +217,14 @@
 }
 
 .user-name-role h3 {
-  color: #e2e8f0;
+  color: var(--charcoal);
   font-size: 16px;
+  font-weight: 700;
   margin-bottom: 2px;
 }
 
 .user-name-role p {
-  color: #94a3b8;
+  color: var(--gray-green);
   font-size: 12px;
 }
 
@@ -247,29 +239,28 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  border-radius: 10px;
-  
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-small);
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
 }
 
 .permission-toggle label {
-  color: #94a3b8;
+  color: var(--charcoal);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .toggle-switch {
   width: 44px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--gray-green);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: var(--transition-base);
   position: relative;
   padding: 0;
   flex-shrink: 0;
@@ -280,7 +271,7 @@
 }
 
 .toggle-switch svg {
-  color: white;
+  color: var(--white);
 }
 
 @media (max-width: 800px) {
@@ -325,20 +316,19 @@
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  border-radius: 10px;
-  color: #a5b4fc;
+  border-radius: var(--radius-small);
+  color: var(--charcoal);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
-  
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition-base);
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
 }
 
 .permission-toggle-btn:hover {
-  background: rgba(102, 126, 234, 0.15);
-  border-color: rgba(102, 126, 234, 0.3);
+  background: var(--white);
+  border-color: var(--charcoal);
 }
 
 .new-user-permissions {
@@ -347,10 +337,9 @@
   gap: 12px;
   margin-top: 12px;
   padding: 16px;
-  border-radius: 12px;
-  
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-small);
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
 }
 
 .permission-checkbox {
@@ -362,7 +351,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #94a3b8;
+  color: var(--charcoal);
   font-size: 13px;
   cursor: pointer;
   user-select: none;
@@ -371,12 +360,13 @@
 .permission-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #667eea;
+  accent-color: var(--vibrant-red);
   cursor: pointer;
 }
 
 .permission-checkbox input[type="checkbox"]:checked + span {
-  color: #a5b4fc;
+  color: var(--charcoal);
+  font-weight: 700;
 }
 
 /* Points Management Styles */
@@ -385,17 +375,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   margin-bottom: 16px;
-  
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.2);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .points-management .points-label {
   font-size: 14px;
-  font-weight: 600;
-  color: #4ade80;
+  font-weight: 700;
+  color: #22c55e;
 }
 
 .points-controls {
@@ -412,12 +401,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: var(--transition-base);
 }
 
 .points-btn.add {
   background: #22c55e;
-  color: white;
+  color: var(--white);
 }
 
 .points-btn.add:hover {
@@ -426,12 +415,12 @@
 }
 
 .points-btn.subtract {
-  background: #ef4444;
-  color: white;
+  background: var(--vibrant-red);
+  color: var(--white);
 }
 
 .points-btn.subtract:hover {
-  background: #dc2626;
+  background: #a80011;
   transform: scale(1.1);
 }
 
@@ -442,5 +431,5 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 2px solid #667eea;
+  border: 2px solid var(--charcoal);
 }

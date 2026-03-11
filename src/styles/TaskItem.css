@@ -1,21 +1,18 @@
 .task-item {
-  border-radius: 12px;
+  border-radius: var(--radius-nested);
   padding: 16px;
   margin-bottom: 12px;
-  transition: all 0.3s;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 4px solid rgba(102, 126, 234, 0.6);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-base);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  border-left: 4px solid var(--charcoal);
+  box-shadow: var(--shadow-soft);
 }
 
 .task-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--charcoal);
 }
 
 .task-header {
@@ -31,13 +28,14 @@
 }
 
 .task-title-section h4 {
-  color: #e2e8f0;
+  color: var(--charcoal);
   margin-bottom: 6px;
   font-size: 16px;
+  font-weight: 700;
 }
 
 .task-description {
-  color: #94a3b8;
+  color: var(--gray-green);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -54,36 +52,37 @@
   border: 1px solid;
   border-radius: 6px;
   font-size: 11px;
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+  background: var(--off-white);
 }
 
 .status-badge {
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 11px;
-  font-weight: 600;
-  color: white;
+  font-weight: 700;
+  color: var(--white);
 }
 
 .difficulty-badge {
   padding: 6px 12px;
-  border: 1px solid;
+  border: 1px solid var(--gray-green-30);
   border-radius: 6px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--off-white);
+  color: var(--charcoal);
 }
 
 .task-meta {
   display: flex;
   gap: 20px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--gray-green-30);
+  border-bottom: 1px solid var(--gray-green-30);
   margin-bottom: 12px;
   font-size: 13px;
 }
@@ -92,12 +91,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #94a3b8;
+  color: var(--gray-green);
 }
 
 .meta-item svg {
   flex-shrink: 0;
-  color: #a5b4fc;
+  color: var(--charcoal);
 }
 
 .task-actions {
@@ -109,64 +108,64 @@
 .action-btn {
   padding: 8px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.3s;
+  transition: var(--transition-base);
 }
 
 .action-btn.start {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .action-btn.start:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 .action-btn.complete {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .action-btn.complete:hover {
-  background: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.2);
 }
 
 .action-btn.reset {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .action-btn.reset:hover {
-  background: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.2);
 }
 
 .action-btn.delete {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(202, 0, 19, 0.08);
+  color: var(--vibrant-red);
+  border: 1px solid rgba(202, 0, 19, 0.3);
 }
 
 .action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(202, 0, 19, 0.15);
 }
 
 .action-btn.not-completed {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(202, 0, 19, 0.08);
+  color: var(--vibrant-red);
+  border: 1px solid rgba(202, 0, 19, 0.3);
 }
 
 .action-btn.not-completed:hover {
-  background: rgba(239, 68, 68, 0.25);
+  background: rgba(202, 0, 19, 0.15);
 }
 
 @media (max-width: 600px) {

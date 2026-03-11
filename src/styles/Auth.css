@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  background: var(--off-white);
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -14,7 +14,7 @@
   position: absolute;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(183, 198, 194, 0.3) 0%, transparent 70%);
   top: -150px;
   right: -150px;
   animation: float 15s ease-in-out infinite;
@@ -25,7 +25,7 @@
   position: absolute;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(118, 75, 162, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(202, 0, 19, 0.08) 0%, transparent 70%);
   bottom: -100px;
   left: -100px;
   animation: float 12s ease-in-out infinite reverse;
@@ -44,15 +44,11 @@
 }
 
 .login-box {
-  border-radius: 20px;
+  border-radius: var(--radius-main);
   padding: 40px;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .login-header {
@@ -62,12 +58,13 @@
 
 .login-header h1 {
   font-size: 28px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 900;
   margin-bottom: 8px;
 }
 
 .login-header p {
-  color: #94a3b8;
+  color: var(--gray-green);
   font-size: 14px;
 }
 
@@ -82,8 +79,8 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #a5b4fc;
-  font-weight: 500;
+  color: var(--charcoal);
+  font-weight: 700;
   font-size: 14px;
 }
 
@@ -92,53 +89,52 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   font-size: 14px;
   font-family: inherit;
-  transition: all 0.3s;
-  
-  /* Glassmorphism input */
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  transition: var(--transition-base);
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
+  color: var(--charcoal);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #64748b;
+  color: var(--gray-green);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: rgba(102, 126, 234, 0.5);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--charcoal);
+  box-shadow: 0 0 0 3px rgba(23, 30, 25, 0.1);
+  background: var(--white);
 }
 
 .form-group input:disabled {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--gray-green-30);
   cursor: not-allowed;
-  color: #64748b;
+  color: var(--gray-green);
 }
 
 .login-button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--vibrant-red);
+  color: var(--white);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-red);
 }
 
 .login-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 12px 30px rgba(202, 0, 19, 0.4);
 }
 
 .login-button:disabled {
@@ -147,26 +143,25 @@
 }
 
 .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: rgba(202, 0, 19, 0.08);
+  color: var(--vibrant-red);
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   margin-bottom: 20px;
   font-size: 14px;
-  border-left: 4px solid #ef4444;
-  backdrop-filter: blur(10px);
+  border-left: 4px solid var(--vibrant-red);
 }
 
 .demo-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--gray-green-30);
   padding-top: 30px;
 }
 
 .demo-section h3 {
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--gray-green);
   margin-bottom: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .demo-grid {
@@ -177,40 +172,42 @@
 
 .demo-button {
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
-  transition: all 0.3s;
+  font-weight: 600;
+  transition: var(--transition-base);
   display: flex;
   align-items: center;
   gap: 6px;
   flex-direction: column;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
+  color: var(--charcoal);
 }
 
 .demo-button:hover {
-  background: rgba(102, 126, 234, 0.15);
-  border-color: rgba(102, 126, 234, 0.4);
+  background: var(--white);
+  border-color: var(--charcoal);
+  box-shadow: var(--shadow-soft);
 }
 
 .role-badge {
   display: inline-block;
-  background: rgba(102, 126, 234, 0.2);
-  color: #a5b4fc;
+  background: var(--charcoal);
+  color: var(--white);
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 600px) {
   .login-box {
     padding: 30px 20px;
+    border-radius: var(--radius-nested);
   }
 
   .login-header h1 {

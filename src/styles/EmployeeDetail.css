@@ -14,22 +14,19 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #a5b4fc;
+  font-weight: 700;
+  transition: var(--transition-base);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  color: var(--charcoal);
+  box-shadow: var(--shadow-soft);
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(102, 126, 234, 0.4);
+  background: var(--off-white);
+  border-color: var(--charcoal);
 }
 
 .detail-content {
@@ -38,32 +35,28 @@
 }
 
 .employee-header {
-  border-radius: 16px;
+  border-radius: var(--radius-main);
   padding: 30px;
   margin-bottom: 30px;
   display: flex;
   gap: 30px;
   align-items: flex-start;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .employee-avatar {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--charcoal);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 900;
   flex-shrink: 0;
 }
 
@@ -73,7 +66,7 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 3px solid rgba(102, 126, 234, 0.5);
+  border: 3px solid var(--charcoal);
 }
 
 .employee-info {
@@ -82,14 +75,15 @@
 
 .employee-info h1 {
   font-size: 28px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 900;
   margin-bottom: 8px;
 }
 
 .designation {
-  color: #a5b4fc;
+  color: var(--vibrant-red);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 16px;
 }
 
@@ -103,31 +97,28 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #94a3b8;
+  color: var(--gray-green);
   font-size: 14px;
 }
 
 .info-item svg {
-  color: #a5b4fc;
+  color: var(--charcoal);
   flex-shrink: 0;
 }
 
 .permissions-section {
-  border-radius: 16px;
+  border-radius: var(--radius-main);
   padding: 30px;
   margin-bottom: 30px;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .permissions-section h3 {
   margin-bottom: 20px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 900;
 }
 
 .permissions-grid {
@@ -141,51 +132,47 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  border-radius: 10px;
-  
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-small);
+  background: var(--off-white);
+  border: 1px solid var(--gray-green-30);
 }
 
 .permission-name {
-  color: #94a3b8;
+  color: var(--charcoal);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: capitalize;
 }
 
 .permission-value {
-  font-weight: 700;
+  font-weight: 900;
   font-size: 14px;
 }
 
 .permission-value.allowed {
-  color: #4ade80;
+  color: #22c55e;
 }
 
 .permission-value.denied {
-  color: #f87171;
+  color: var(--vibrant-red);
 }
 
 .tasks-section {
-  border-radius: 16px;
+  border-radius: var(--radius-main);
   padding: 30px;
-  
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--white);
+  border: 1px solid var(--gray-green-30);
+  box-shadow: var(--shadow-soft);
 }
 
 .tasks-section h3 {
   margin-bottom: 20px;
-  color: #e2e8f0;
+  color: var(--charcoal);
+  font-weight: 900;
 }
 
 .no-tasks {
-  color: #64748b;
+  color: var(--gray-green);
   text-align: center;
   padding: 40px 20px;
 }
@@ -206,6 +193,7 @@
     align-items: center;
     text-align: center;
     padding: 20px;
+    border-radius: var(--radius-nested);
   }
 
   .employee-avatar {
@@ -229,5 +217,6 @@
   .permissions-section,
   .tasks-section {
     padding: 20px;
+    border-radius: var(--radius-nested);
   }
 }
