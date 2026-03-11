@@ -1,15 +1,21 @@
 .task-item {
-  background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 16px;
-  border-left: 4px solid #667eea;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 12px;
   transition: all 0.3s;
+  
+  /* Glassmorphism */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid rgba(102, 126, 234, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .task-item:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .task-header {
@@ -25,13 +31,13 @@
 }
 
 .task-title-section h4 {
-  color: #1e293b;
+  color: #e2e8f0;
   margin-bottom: 6px;
   font-size: 16px;
 }
 
 .task-description {
-  color: #64748b;
+  color: #94a3b8;
   font-size: 13px;
   line-height: 1.4;
 }
@@ -40,19 +46,21 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .priority-badge {
   padding: 6px 12px;
   border: 1px solid;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .status-badge {
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   color: white;
@@ -61,21 +69,21 @@
 .difficulty-badge {
   padding: 6px 12px;
   border: 1px solid;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .task-meta {
   display: flex;
   gap: 20px;
   padding: 12px 0;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 12px;
   font-size: 13px;
 }
@@ -84,11 +92,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .meta-item svg {
   flex-shrink: 0;
+  color: #a5b4fc;
 }
 
 .task-actions {
@@ -100,7 +109,7 @@
 .action-btn {
   padding: 8px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -111,49 +120,53 @@
 }
 
 .action-btn.start {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .action-btn.start:hover {
-  background: #bfdbfe;
+  background: rgba(59, 130, 246, 0.3);
 }
 
 .action-btn.complete {
-  background: #dcfce7;
-  color: #15803d;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .action-btn.complete:hover {
-  background: #bbf7d0;
+  background: rgba(34, 197, 94, 0.3);
 }
 
 .action-btn.reset {
-  background: #fef3c7;
-  color: #b45309;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .action-btn.reset:hover {
-  background: #fde68a;
+  background: rgba(245, 158, 11, 0.3);
 }
 
 .action-btn.delete {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .action-btn.delete:hover {
-  background: #fecaca;
+  background: rgba(239, 68, 68, 0.3);
 }
 
 .action-btn.not-completed {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .action-btn.not-completed:hover {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.25);
 }
 
 @media (max-width: 600px) {

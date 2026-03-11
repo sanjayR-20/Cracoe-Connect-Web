@@ -38,14 +38,17 @@ export default function AdminPanelScreen() {
   const [showPermissions, setShowPermissions] = useState(false);
 
   const currentUser = getCurrentUser();
+  const isCEO = currentUser?.designation === 'CEO';
+  const isCTO = currentUser?.designation === 'CTO';
+  const hasAccess = isCEO || isCTO;
 
-  if (currentUser?.designation !== 'CEO') {
+  if (!hasAccess) {
     return (
       <div className="admin-panel-container">
         <div className="access-denied">
           <Lock size={48} />
           <h2>Access Denied</h2>
-          <p>Admin panel is only available for the CEO</p>
+          <p>Admin panel is only available for CEO and CTO</p>
           <button onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
         </div>
       </div>
@@ -126,84 +129,87 @@ export default function AdminPanelScreen() {
         <button className="back-btn" onClick={() => navigate('/dashboard')}>
           <ArrowLeft size={20} /> Back
         </button>
-        <h1>Admin Panel - Permission Management</h1>
+        <h1>{isCEO ? 'Admin Panel - Permission Management' : 'Points Management'}</h1>
       </header>
 
       <div className="admin-content">
-        <div className="add-employee">
-          <h2>Add Employee</h2>
-          <div className="add-employee-form">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={newUser.name}
-              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Username"
-              value={newUser.username}
-              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            />
-            <select
-              value={newUser.designation}
-              onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
-            >
-              <option>CEO</option>
-              <option>COO</option>
-              <option>CTO</option>
-              <option>CFO</option>
-              <option>Manager</option>
-              <option>Marketing Lead</option>
-              <option>Developer</option>
-            </select>
-
-            {/* Permission Selection Section */}
-            <div className="permission-selection">
-              <button 
-                type="button" 
-                className="permission-toggle-btn"
-                onClick={() => setShowPermissions(!showPermissions)}
+        {/* Add Employee section - CEO only */}
+        {isCEO && (
+          <div className="add-employee">
+            <h2>Add Employee</h2>
+            <div className="add-employee-form">
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Username"
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              />
+              <select
+                value={newUser.designation}
+                onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
               >
-                Set Permissions {showPermissions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-              
-              {showPermissions && (
-                <div className="new-user-permissions">
-                  {Object.entries(permissionLabels).map(([key, label]) => (
-                    <div key={key} className="permission-checkbox">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={newUser.permissions[key]}
-                          onChange={() => handleNewUserPermissionToggle(key)}
-                        />
-                        {label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                <option>CEO</option>
+                <option>COO</option>
+                <option>CTO</option>
+                <option>CFO</option>
+                <option>Manager</option>
+                <option>Marketing Lead</option>
+                <option>Developer</option>
+              </select>
 
-            <button className="btn-primary" onClick={handleAddUser}>
-              Add Employee
-            </button>
+              {/* Permission Selection Section */}
+              <div className="permission-selection">
+                <button 
+                  type="button" 
+                  className="permission-toggle-btn"
+                  onClick={() => setShowPermissions(!showPermissions)}
+                >
+                  Set Permissions {showPermissions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                
+                {showPermissions && (
+                  <div className="new-user-permissions">
+                    {Object.entries(permissionLabels).map(([key, label]) => (
+                      <div key={key} className="permission-checkbox">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={newUser.permissions[key]}
+                            onChange={() => handleNewUserPermissionToggle(key)}
+                          />
+                          {label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button className="btn-primary" onClick={handleAddUser}>
+                Add Employee
+              </button>
+            </div>
+            {userError && <div className="error-message">{userError}</div>}
           </div>
-          {userError && <div className="error-message">{userError}</div>}
-        </div>
+        )}
 
         <div className="permissions-management">
           {users.map((user) => {
@@ -237,7 +243,7 @@ export default function AdminPanelScreen() {
                     <h3>{user.name}</h3>
                     <p>{user.designation}</p>
                   </div>
-                  {user.designation !== 'CEO' && (
+                  {isCEO && user.designation !== 'CEO' && (
                     <button
                       className="remove-user-btn"
                       onClick={() => removeUser(user.id)}
@@ -262,19 +268,22 @@ export default function AdminPanelScreen() {
                   </div>
                 )}
 
-                <div className="permissions-toggles">
-                  {Object.entries(permissionLabels).map(([key, label]) => (
-                    <div key={key} className="permission-toggle">
-                      <label>{label}</label>
-                      <button
-                        className={`toggle-switch ${user.permissions[key] ? 'active' : ''}`}
-                        onClick={() => handlePermissionToggle(user.id, key)}
-                      >
-                        {user.permissions[key] ? <Unlock size={16} /> : <Lock size={16} />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                {/* Permissions toggles - CEO only */}
+                {isCEO && (
+                  <div className="permissions-toggles">
+                    {Object.entries(permissionLabels).map(([key, label]) => (
+                      <div key={key} className="permission-toggle">
+                        <label>{label}</label>
+                        <button
+                          className={`toggle-switch ${user.permissions[key] ? 'active' : ''}`}
+                          onClick={() => handlePermissionToggle(user.id, key)}
+                        >
+                          {user.permissions[key] ? <Unlock size={16} /> : <Lock size={16} />}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -1054,11 +1054,11 @@ export const useDataStore = create((set, get) => ({
     return true;
   },
 
-  // Admin function to update user points
+  // Admin function to update user points (CEO and CTO can adjust)
   updateUserPoints: async (userId, pointsChange) => {
     const currentUser = get().getCurrentUser();
-    if (currentUser?.designation !== 'CEO') {
-      throw new Error('Only CEO can adjust points');
+    if (!['CEO', 'CTO'].includes(currentUser?.designation)) {
+      throw new Error('Only CEO and CTO can adjust points');
     }
 
     const user = get().users.find((u) => u.id === userId);

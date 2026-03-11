@@ -1,7 +1,9 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import EmployeeCard from '../components/EmployeeCard';
+import ChromaGrid from '../components/ChromaGrid';
+import Dock from '../components/Dock';
 import '../styles/Dashboard.css';
 import {
   LogOut,
@@ -14,6 +16,12 @@ import {
   Plus,
   Video,
   Settings,
+  LayoutDashboard,
+  ListTodo,
+  Trophy,
+  MessageCircle,
+  CalendarDays,
+  Megaphone,
 } from 'lucide-react';
 
 export default function DashboardScreen() {
@@ -83,10 +91,10 @@ export default function DashboardScreen() {
     searchAll(query);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/');
-  };
+  }, [logout, navigate]);
 
   const handleSendMessage = () => {
     if (messageText.trim()) {
@@ -184,32 +192,82 @@ export default function DashboardScreen() {
     return { months, seriesA, seriesB };
   }, []);
 
+  // Dock navigation items
+  const dockItems = useMemo(() => {
+    const items = [
+      {
+        id: 'overview',
+        icon: <LayoutDashboard size={20} />,
+        label: 'Overview',
+        onClick: () => setActiveTab('overview'),
+      },
+      {
+        id: 'tasks',
+        icon: <ListTodo size={20} />,
+        label: 'Tasks',
+        onClick: () => setActiveTab('tasks'),
+      },
+      {
+        id: 'leaderboard',
+        icon: <Trophy size={20} />,
+        label: 'Leaderboard',
+        onClick: () => setActiveTab('leaderboard'),
+      },
+      {
+        id: 'messaging',
+        icon: <MessageCircle size={20} />,
+        label: 'Messages',
+        onClick: () => setActiveTab('messaging'),
+      },
+      {
+        id: 'schedule',
+        icon: <CalendarDays size={20} />,
+        label: 'Schedule',
+        onClick: () => setActiveTab('schedule'),
+      },
+    ];
+
+    if (canAnnounce()) {
+      items.push({
+        id: 'announcements',
+        icon: <Megaphone size={20} />,
+        label: 'Announcements',
+        onClick: () => setActiveTab('announcements'),
+      });
+    }
+
+    if (['CEO', 'CTO'].includes(currentUser?.designation)) {
+      items.push({
+        id: 'admin',
+        icon: <Settings size={20} />,
+        label: 'Admin Panel',
+        onClick: () => navigate('/admin'),
+      });
+    }
+
+    items.push({
+      id: 'logout',
+      icon: <LogOut size={20} />,
+      label: 'Logout',
+      onClick: handleLogout,
+    });
+
+    return items;
+  }, [canAnnounce, currentUser?.designation, handleLogout, navigate]);
+
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-content">
-          <h1>Dashboard</h1>
-          <div className="header-user-info">
-            <button onClick={() => navigate('/profile')} className="profile-link">
-              {currentUser?.profilePhoto ? (
-                <img src={currentUser.profilePhoto} alt={currentUser.name} className="header-avatar-img" />
-              ) : (
-                <div className="header-avatar">{currentUser?.name?.charAt(0)}</div>
-              )}
-              <span>{currentUser?.name}</span>
-            </button>
-            <span className="user-role">{currentUser?.designation}</span>
-            {currentUser?.designation === 'CEO' && (
-              <button onClick={() => navigate('/admin')} className="admin-btn" title="Admin Panel">
-                <Settings size={18} />
-              </button>
-            )}
-            <button onClick={handleLogout} className="logout-btn">
-              <LogOut size={18} />
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Dock Navigation */}
+      <Dock
+        items={dockItems}
+        activeItem={activeTab}
+        user={currentUser}
+        onProfileClick={() => navigate('/profile')}
+        magnification={56}
+        distance={140}
+        panelHeight={56}
+        baseItemSize={40}
+      />
 
       <div className="dashboard-content">
         {(supabaseLoading || supabaseError || !supabaseReady) && (
@@ -511,7 +569,7 @@ export default function DashboardScreen() {
         {/* Tasks Tab (Employee cards) */}
         {activeTab === 'tasks' && (
           <div className="employees-section">
-            <div className="employees-grid">
+            <ChromaGrid radius={350} damping={0.4} fadeOut={0.5}>
               {users.map((user) => (
                 <EmployeeCard
                   key={user.id}
@@ -520,7 +578,7 @@ export default function DashboardScreen() {
                   onAssignTask={() => navigate(`/create-task?assignee=${user.id}`)}
                 />
               ))}
-            </div>
+            </ChromaGrid>
           </div>
         )}
 
@@ -812,7 +870,7 @@ export default function DashboardScreen() {
         <Plus size={24} />
       </button>
 
-      {currentUser?.designation === 'CEO' && (
+      {['CEO', 'CTO'].includes(currentUser?.designation) && (
         <button
           className="btn-admin"
           onClick={() => navigate('/admin')}

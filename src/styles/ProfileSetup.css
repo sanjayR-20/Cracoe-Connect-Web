@@ -1,6 +1,6 @@
 .profile-setup-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: transparent;
   padding: 2rem;
   display: flex;
   justify-content: center;
@@ -10,10 +10,15 @@
 .profile-setup-wrapper {
   width: 100%;
   max-width: 800px;
-  background: #1e1e30;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  
+  /* Glassmorphism */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .profile-setup-header {
@@ -22,13 +27,13 @@
 }
 
 .profile-setup-header h1 {
-  color: #fff;
+  color: #e2e8f0;
   font-size: 2rem;
   margin-bottom: 0.5rem;
 }
 
 .profile-setup-header p {
-  color: #8b8b9e;
+  color: #94a3b8;
   font-size: 1rem;
 }
 
@@ -39,20 +44,21 @@
 }
 
 .form-section {
-  background: #252542;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   padding: 1.5rem;
 }
 
 .form-section h2 {
-  color: #fff;
+  color: #e2e8f0;
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #3a3a5c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .photo-section {
@@ -65,7 +71,7 @@
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  background: #3a3a5c;
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -73,12 +79,12 @@
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
-  border: 3px dashed #5a5a8c;
+  border: 3px dashed rgba(102, 126, 234, 0.4);
 }
 
 .photo-upload:hover {
-  border-color: #6366f1;
-  background: #4a4a6c;
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .photo-placeholder {
@@ -86,7 +92,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: #8b8b9e;
+  color: #94a3b8;
 }
 
 .photo-placeholder span {
@@ -113,7 +119,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #b8b8cc;
+  color: #a5b4fc;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -123,24 +129,25 @@
 .form-group textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: #1e1e30;
-  border: 1px solid #3a3a5c;
-  border-radius: 8px;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e2e8f0;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #5a5a7c;
+  color: #64748b;
 }
 
 .form-group select {
@@ -148,8 +155,8 @@
 }
 
 .form-group select option {
-  background: #1e1e30;
-  color: #fff;
+  background: #1a1a2e;
+  color: #e2e8f0;
 }
 
 .form-group textarea {
@@ -158,7 +165,7 @@
 }
 
 .form-group .error {
-  color: #ef4444;
+  color: #f87171;
   font-size: 0.8rem;
   margin-top: 0.25rem;
   display: block;
@@ -166,28 +173,28 @@
 
 .error-message {
   background: rgba(239, 68, 68, 0.1);
-  border: 1px solid #ef4444;
-  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: center;
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   border: none;
   padding: 1rem 2rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .submit-btn:disabled {
