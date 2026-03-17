@@ -14,11 +14,6 @@ import {
   Send,
   Plus,
   Video,
-  LayoutDashboard,
-  ListTodo,
-  Trophy,
-  MessageCircle,
-  CalendarDays,
   Megaphone,
 } from 'lucide-react';
 
@@ -159,51 +154,6 @@ export default function DashboardScreen() {
     const seriesB = [8, 15, 12, 18, 20, 14, 20, 25, 18, 12, 15, 16];
     return { months, seriesA, seriesB };
   }, []);
-
-  // Dock navigation items
-  const dockItems = useMemo(
-    () => [
-      {
-        id: 'overview',
-        label: 'Overview',
-        icon: <LayoutDashboard size={24} />,
-        onClick: () => setActiveTab('overview'),
-      },
-      {
-        id: 'tasks',
-        label: 'Tasks',
-        icon: <ListTodo size={24} />,
-        onClick: () => setActiveTab('tasks'),
-      },
-      {
-        id: 'leaderboard',
-        label: 'Leaderboard',
-        icon: <Trophy size={24} />,
-        onClick: () => setActiveTab('leaderboard'),
-      },
-      {
-        id: 'messages',
-        label: 'Messages',
-        icon: <MessageCircle size={24} />,
-        onClick: () => setActiveTab('messaging'),
-      },
-      {
-        id: 'schedule',
-        label: 'Schedule',
-        icon: <CalendarDays size={24} />,
-        onClick: () => setActiveTab('schedule'),
-        disabled: !canSchedule(),
-      },
-      {
-        id: 'announcements',
-        label: 'Announcements',
-        icon: <Megaphone size={24} />,
-        onClick: () => setActiveTab('announcements'),
-        disabled: !canAnnounce(),
-      },
-    ],
-    [canSchedule, canAnnounce]
-  );
 
   const availableShareItems = useMemo(() => {
     const items = [];
