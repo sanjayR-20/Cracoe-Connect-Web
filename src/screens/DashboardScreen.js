@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import EmployeeCard from '../components/EmployeeCard';
 import ChromaGrid from '../components/ChromaGrid';
-import Dock from '../components/Dock';
 import '../styles/Dashboard.css';
 import {
   LogOut,
@@ -15,7 +14,6 @@ import {
   Send,
   Plus,
   Video,
-  Settings,
   LayoutDashboard,
   ListTodo,
   Trophy,
@@ -91,42 +89,12 @@ export default function DashboardScreen() {
     searchAll(query);
   };
 
-  const handleLogout = useCallback(() => {
-    logout();
-    navigate('/');
-  }, [logout, navigate]);
-
   const handleSendMessage = () => {
     if (messageText.trim()) {
       sendMessage(messageText);
       setMessageText('');
     }
   };
-
-  const availableShareItems = useMemo(() => {
-    if (shareType === 'task') {
-      return tasks.map((task) => ({
-        id: task.id,
-        label: task.title,
-        payload: task,
-      }));
-    }
-    if (shareType === 'schedule') {
-      return schedule.map((item) => ({
-        id: item.id,
-        label: `${item.title} • ${item.time}`,
-        payload: item,
-      }));
-    }
-    if (shareType === 'meeting') {
-      return meetings.map((meeting) => ({
-        id: meeting.id,
-        label: `${meeting.title} • ${meeting.date}`,
-        payload: meeting,
-      }));
-    }
-    return [];
-  }, [shareType, tasks, schedule, meetings]);
 
   const handleShare = () => {
     if (!shareItemId) {
@@ -237,146 +205,35 @@ export default function DashboardScreen() {
     [canSchedule, canAnnounce]
   );
 
-  const handleSendMessage = () => {
-    if (messageText.trim()) {
-      sendMessage(messageText);
-      setMessageText('');
-    }
-  };
-
   const availableShareItems = useMemo(() => {
+    const items = [];
     if (shareType === 'task') {
-      return tasks.map((task) => ({
-        id: task.id,
-        label: task.title,
-        payload: task,
-      }));
+      tasks.forEach(task => {
+        items.push({
+          id: task.id,
+          label: task.title,
+          payload: task
+        });
+      });
+    } else if (shareType === 'schedule') {
+      schedule.forEach(item => {
+        items.push({
+          id: item.id,
+          label: item.title,
+          payload: item
+        });
+      });
+    } else if (shareType === 'meeting') {
+      meetings.forEach(meeting => {
+        items.push({
+          id: meeting.id,
+          label: meeting.title,
+          payload: meeting
+        });
+      });
     }
-    if (shareType === 'schedule') {
-      return schedule.map((item) => ({
-        id: item.id,
-        label: `${item.title} • ${item.time}`,
-        payload: item,
-      }));
-    }
-    if (shareType === 'meeting') {
-      return meetings.map((meeting) => ({
-        id: meeting.id,
-        label: `${meeting.title} • ${meeting.date}`,
-        payload: meeting,
-      }));
-    }
-    return [];
+    return items;
   }, [shareType, tasks, schedule, meetings]);
-
-  const handleShare = () => {
-    if (!shareItemId) {
-      alert('Select an item to share');
-      return;
-    }
-    const item = availableShareItems.find((i) => i.id === shareItemId);
-    if (!item) {
-      alert('Invalid selection');
-      return;
-    }
-    sendSharedMessage(shareType, item.payload);
-    setShareItemId('');
-  };
-
-  const handleToggleAttendee = (userId) => {
-    setMeetingAttendees((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const handleCreateMeeting = () => {
-    setMeetingError('');
-    if (!meetingTitle.trim()) {
-      setMeetingError('Meeting title is required');
-      return;
-    }
-    if (!meetingDate) {
-      setMeetingError('Meeting date is required');
-      return;
-    }
-    if (!meetingTime) {
-      setMeetingError('Meeting time is required');
-      return;
-    }
-    if (meetingAttendees.length === 0) {
-      setMeetingError('Select at least one attendee');
-      return;
-    }
-
-    addMeeting(meetingTitle, meetingDate, meetingTime, meetingAttendees);
-    setMeetingTitle('');
-    setMeetingDate('');
-    setMeetingTime('');
-    setMeetingAttendees([]);
-  };
-
-  const handleAnnouncement = () => {
-    const title = prompt('Announcement Title:');
-    if (title) {
-      const message = prompt('Announcement Message:');
-      if (message) {
-        addAnnouncement(title, message);
-        alert('Announcement sent to all team members');
-      }
-    }
-  };
-
-  const chartData = useMemo(() => {
-    const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'];
-    const seriesA = [12, 19, 15, 22, 28, 18, 25, 30, 22, 15, 18, 20];
-    const seriesB = [8, 15, 12, 18, 20, 14, 20, 25, 18, 12, 15, 16];
-    return { months, seriesA, seriesB };
-  }, []);
-
-  // Dock navigation items
-  const dockItems = useMemo(
-    () => [
-      {
-        id: 'overview',
-        label: 'Overview',
-        icon: <LayoutDashboard size={24} />,
-        onClick: () => setActiveTab('overview'),
-      },
-      {
-        id: 'tasks',
-        label: 'Tasks',
-        icon: <ListTodo size={24} />,
-        onClick: () => setActiveTab('tasks'),
-      },
-      {
-        id: 'leaderboard',
-        label: 'Leaderboard',
-        icon: <Trophy size={24} />,
-        onClick: () => setActiveTab('leaderboard'),
-      },
-      {
-        id: 'messages',
-        label: 'Messages',
-        icon: <MessageCircle size={24} />,
-        onClick: () => setActiveTab('messaging'),
-      },
-      {
-        id: 'schedule',
-        label: 'Schedule',
-        icon: <CalendarDays size={24} />,
-        onClick: () => setActiveTab('schedule'),
-        disabled: !canSchedule(),
-      },
-      {
-        id: 'announcements',
-        label: 'Announcements',
-        icon: <Megaphone size={24} />,
-        onClick: () => setActiveTab('announcements'),
-        disabled: !canAnnounce(),
-      },
-    ],
-    [canSchedule, canAnnounce]
-  );
 
   const handleLogout = useCallback(() => {
     logout();
@@ -385,18 +242,25 @@ export default function DashboardScreen() {
 
   return (
     <div className="dashboard-container">
-      {/* Dock Navigation */}
-      <Dock
-        items={dockItems}
-        activeItem={activeTab}
-        user={currentUser}
-        onProfileClick={() => navigate('/profile')}
-        onLogoutClick={handleLogout}
-        magnification={56}
-        distance={140}
-        panelHeight={56}
-        baseItemSize={40}
-      />
+      <header className="dashboard-header">
+        <div className="header-left">
+          <div className="logo">
+            <img src="/logo.png" alt="Logo" />
+          </div>
+          <div className="header-title">
+            <h1>Dashboard</h1>
+          </div>
+        </div>
+        <div className="header-right">
+          <div className="user-profile">
+            <img src={currentUser?.profilePhoto} alt={currentUser?.name} />
+            <span>{currentUser?.name}</span>
+          </div>
+          <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={24} />
+          </button>
+        </div>
+      </header>
 
       <div className="dashboard-content">
         <div className="content-area">
@@ -665,34 +529,71 @@ export default function DashboardScreen() {
                 </div>
               </div>
 
-              {/* Announcements */}
+              {/* Announcements Section */}
               <div className="announcements-section">
                 <div className="section-header">
-                  <h3>Announcements</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                    <Megaphone size={20} className="mr-2 text-purple-600" />
+                    Announcements
+                  </h3>
                   {canAnnounce() && (
-                    <button className="btn-small" onClick={handleAnnouncement}>
+                    <button onClick={handleAnnouncement} className="new-announcement-btn">
                       + New
                     </button>
                   )}
                 </div>
-                <div className="announcements-list">
-                  {announcements.map((announcement) => (
-                    <div key={announcement.id} className="announcement-item">
-                      <h4>{announcement.title}</h4>
-                      <p>{announcement.message}</p>
-                      <small>{new Date(announcement.timestamp).toLocaleString()}</small>
-                      {canManageData() && (
-                        <button
-                          className="delete-btn"
-                          onClick={() => deleteAnnouncement(announcement.id)}
-                        >
-                          Delete
-                        </button>
-                      )}
+                <div className="announcements-list space-y-3">
+                  {announcements.map((ann) => (
+                    <div key={ann.id} className="announcement-item p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-gray-800">{ann.title}</p>
+                          <p className="text-gray-600 mt-1">{ann.message}</p>
+                        </div>
+                        {canManageData() && (
+                          <button onClick={() => deleteAnnouncement(ann.id)} className="delete-btn">
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                      <small className="text-gray-400 mt-2 block">{new Date(ann.created_at).toLocaleString()}</small>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* Meetings Section */}
+              {canSchedule() && (
+                <div className="meetings-section">
+                  <h3>Upcoming Meetings</h3>
+                  <div className="meetings-list">
+                    {meetings.map((meeting) => (
+                      <div key={meeting.id} className="meeting-item">
+                        <div className="meeting-icon">
+                          <Calendar size={20} />
+                        </div>
+                        <div className="meeting-details">
+                          <h4>{meeting.title}</h4>
+                          <p>
+                            {meeting.date} at {meeting.time}
+                          </p>
+                          {meeting.minutes && (
+                            <p className="meeting-minutes">Minutes: {meeting.minutes.substring(0, 50)}...</p>
+                          )}
+                        </div>
+                        {canManageData() && (
+                          <button
+                            className="delete-btn"
+                            onClick={() => deleteMeeting(meeting.id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
