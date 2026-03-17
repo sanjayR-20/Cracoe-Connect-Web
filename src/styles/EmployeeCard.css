@@ -95,12 +95,13 @@
 .task-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 12px;
+  gap: 16px; /* Increased gap */
+  padding: 16px; /* Increased padding */
   border-radius: var(--radius-small);
-  margin-bottom: 16px;
+  margin-bottom: 20px; /* Increased margin */
   background: var(--off-white);
   border: 1px solid var(--gray-green-30);
+  text-align: center; /* Center align text */
 }
 
 .task-preview {

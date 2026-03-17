@@ -626,10 +626,10 @@
   animation: fadeIn 0.25s ease-in-out;
 }
 
-.employees-grid {
+.employees-section .employees-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
 /* Messaging Section */

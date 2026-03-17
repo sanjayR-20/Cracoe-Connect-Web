@@ -173,6 +173,7 @@ export default function AdminPanelScreen() {
                 <option>Manager</option>
                 <option>Marketing Lead</option>
                 <option>Developer</option>
+                <option>Tester</option>
               </select>
 
               {/* Permission Selection Section */}

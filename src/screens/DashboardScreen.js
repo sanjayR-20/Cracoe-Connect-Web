@@ -535,7 +535,7 @@ export default function DashboardScreen() {
           {/* Tasks Tab (Employee cards) */}
           {activeTab === 'tasks' && (
             <div className="employees-section">
-              <ChromaGrid radius={350} damping={0.4} fadeOut={0.5}>
+              <div className="employees-grid">
                 {users.map((user) => (
                   <EmployeeCard
                     key={user.id}
@@ -544,7 +544,7 @@ export default function DashboardScreen() {
                     onAssignTask={() => navigate(`/create-task?assignee=${user.id}`)}
                   />
                 ))}
-              </ChromaGrid>
+              </div>
             </div>
           )}
 
