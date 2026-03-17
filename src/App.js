@@ -50,6 +50,7 @@ function ProfileSetupRoute({ children }) {
 
 function App() {
   const initializeFromSupabase = useDataStore((state) => state.initializeFromSupabase);
+  const supabaseLoading = useDataStore((state) => state.supabaseLoading);
 
   useEffect(() => {
     // Request notification permission on app load
@@ -58,6 +59,14 @@ function App() {
     }
     initializeFromSupabase();
   }, [initializeFromSupabase]);
+
+  if (supabaseLoading && !useDataStore.getState().currentUserId) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <h1>Loading...</h1>
+      </div>
+    );
+  }
 
   return (
     <Router>

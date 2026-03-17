@@ -121,7 +121,8 @@ export default function Dock({
   baseItemSize = 40,
   activeItem = null,
   user = null,
-  onProfileClick = null
+  onProfileClick = null,
+  onLogoutClick = null
 }) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
@@ -155,29 +156,33 @@ export default function Dock({
         role="toolbar"
         aria-label="Navigation dock"
       >
+        <div className="dock-items-container">
+          {items.map((item, index) => (
+            <DockItem
+              key={item.id || index}
+              onClick={item.onClick}
+              className={item.className}
+              mouseX={mouseX}
+              spring={spring}
+              distance={distance}
+              magnification={magnification}
+              baseItemSize={baseItemSize}
+              active={activeItem === item.id}
+            >
+              <DockIcon>{item.icon}</DockIcon>
+              <DockLabel>{item.label}</DockLabel>
+            </DockItem>
+          ))}
+        </div>
+
         {user && (
-          <>
+          <div className="dock-user-controls">
             <DockProfile user={user} onClick={onProfileClick} />
-            <DockDivider />
-          </>
+            <button onClick={onLogoutClick} className="dock-logout-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+          </div>
         )}
-        
-        {items.map((item, index) => (
-          <DockItem
-            key={item.id || index}
-            onClick={item.onClick}
-            className={item.className}
-            mouseX={mouseX}
-            spring={spring}
-            distance={distance}
-            magnification={magnification}
-            baseItemSize={baseItemSize}
-            active={activeItem === item.id}
-          >
-            <DockIcon>{item.icon}</DockIcon>
-            <DockLabel>{item.label}</DockLabel>
-          </DockItem>
-        ))}
       </motion.div>
     </motion.div>
   );

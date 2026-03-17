@@ -194,7 +194,7 @@ const deserializeMeeting = (row) => ({
 });
 
 export const useDataStore = create((set, get) => ({
-  currentUserId: null,
+  currentUserId: localStorage.getItem('currentUserId') || null,
   users: initialUsers,
   tasks: initialTasks,
   announcements: initialAnnouncements,
@@ -411,6 +411,7 @@ export const useDataStore = create((set, get) => ({
     );
     if (user) {
       set({ currentUserId: user.id });
+      localStorage.setItem('currentUserId', user.id);
       return true;
     }
     return false;
@@ -418,6 +419,7 @@ export const useDataStore = create((set, get) => ({
 
   logout: () => {
     set({ currentUserId: null, searchResults: [] });
+    localStorage.removeItem('currentUserId');
   },
 
   // User getters
