@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import EmployeeCard from '../components/EmployeeCard';
-import ChromaGrid from '../components/ChromaGrid';
 import '../styles/Dashboard.css';
 import {
   LogOut,
