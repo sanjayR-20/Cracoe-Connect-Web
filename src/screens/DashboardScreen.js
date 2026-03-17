@@ -193,22 +193,79 @@ export default function DashboardScreen() {
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo">
-            <img src="/logo.png" alt="Logo" />
+        <div className="header-container">
+          <div className="header-left">
+            <div className="logo">
+              <img src="/logo.png" alt="Cracoe Connect" className="logo-img" />
+            </div>
+            <div className="header-title">
+              <h1>Dashboard</h1>
+            </div>
           </div>
-          <div className="header-title">
-            <h1>Dashboard</h1>
+          
+          <div className="header-center">
+            <nav className="main-nav">
+              <button
+                className={`nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                Overview
+              </button>
+              <button
+                className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`}
+                onClick={() => setActiveTab('tasks')}
+              >
+                Tasks
+              </button>
+              <button
+                className={`nav-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+                onClick={() => setActiveTab('leaderboard')}
+              >
+                Leaderboard
+              </button>
+              <button
+                className={`nav-btn ${activeTab === 'messaging' ? 'active' : ''}`}
+                onClick={() => setActiveTab('messaging')}
+              >
+                Messages
+              </button>
+              <button
+                className={`nav-btn ${activeTab === 'schedule' ? 'active' : ''}`}
+                onClick={() => setActiveTab('schedule')}
+              >
+                Schedule
+              </button>
+              {canAnnounce() && (
+                <button
+                  className={`nav-btn ${activeTab === 'announcements' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('announcements')}
+                >
+                  Announcements
+                </button>
+              )}
+            </nav>
           </div>
-        </div>
-        <div className="header-right">
-          <div className="user-profile">
-            <img src={currentUser?.profilePhoto} alt={currentUser?.name} />
-            <span>{currentUser?.name}</span>
+
+          <div className="header-right">
+            <div className="user-profile" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
+              <div className="profile-avatar">
+                {currentUser?.profilePhoto ? (
+                  <img src={currentUser.profilePhoto} alt={currentUser.name} className="avatar-img" />
+                ) : (
+                  <div className="avatar-placeholder">
+                    {currentUser?.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="profile-info">
+                <span className="profile-name">{currentUser?.name}</span>
+                <span className="profile-role">{currentUser?.designation}</span>
+              </div>
+            </div>
+            <button className="logout-btn" onClick={handleLogout} title="Logout">
+              <LogOut size={20} />
+            </button>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={24} />
-          </button>
         </div>
       </header>
 
@@ -225,47 +282,6 @@ export default function DashboardScreen() {
               )}
             </div>
           )}
-          <div className="tabs">
-            <button
-              className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </button>
-            <button
-              className={`tab ${activeTab === 'tasks' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tasks')}
-            >
-              Tasks
-            </button>
-            <button
-              className={`tab ${activeTab === 'leaderboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('leaderboard')}
-            >
-              Leaderboard
-            </button>
-            <button
-              className={`tab ${activeTab === 'messaging' ? 'active' : ''}`}
-              onClick={() => setActiveTab('messaging')}
-            >
-              Messages
-            </button>
-            <button
-              className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
-              onClick={() => setActiveTab('schedule')}
-            >
-              Schedule
-            </button>
-            {canAnnounce() && (
-              <button
-                className={`tab ${activeTab === 'announcements' ? 'active' : ''}`}
-                onClick={() => setActiveTab('announcements')}
-              >
-                Announcements
-              </button>
-            )}
-          </div>
-
           {/* Search Bar */}
           <div className="search-container">
             <input
@@ -482,8 +498,8 @@ export default function DashboardScreen() {
               {/* Announcements Section */}
               <div className="announcements-section">
                 <div className="section-header">
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                    <Megaphone size={20} className="mr-2 text-purple-600" />
+                  <h3 className="announcements-title">
+                    <Megaphone size={20} className="announcement-icon" />
                     Announcements
                   </h3>
                   {canAnnounce() && (
@@ -492,58 +508,27 @@ export default function DashboardScreen() {
                     </button>
                   )}
                 </div>
-                <div className="announcements-list space-y-3">
+                <div className="announcements-list">
                   {announcements.map((ann) => (
-                    <div key={ann.id} className="announcement-item p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-gray-800">{ann.title}</p>
-                          <p className="text-gray-600 mt-1">{ann.message}</p>
+                    <div key={ann.id} className="announcement-item">
+                      <div className="announcement-content">
+                        <div className="announcement-header">
+                          <h4 className="announcement-title">{ann.title}</h4>
+                          {canManageData() && (
+                            <button onClick={() => deleteAnnouncement(ann.id)} className="delete-btn">
+                              Delete
+                            </button>
+                          )}
                         </div>
-                        {canManageData() && (
-                          <button onClick={() => deleteAnnouncement(ann.id)} className="delete-btn">
-                            Delete
-                          </button>
-                        )}
+                        <p className="announcement-message">{ann.message}</p>
+                        <small className="announcement-timestamp">
+                          {new Date(ann.timestamp || ann.created_at).toLocaleString()}
+                        </small>
                       </div>
-                      <small className="text-gray-400 mt-2 block">{new Date(ann.created_at).toLocaleString()}</small>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {/* Meetings Section */}
-              {canSchedule() && (
-                <div className="meetings-section">
-                  <h3>Upcoming Meetings</h3>
-                  <div className="meetings-list">
-                    {meetings.map((meeting) => (
-                      <div key={meeting.id} className="meeting-item">
-                        <div className="meeting-icon">
-                          <Calendar size={20} />
-                        </div>
-                        <div className="meeting-details">
-                          <h4>{meeting.title}</h4>
-                          <p>
-                            {meeting.date} at {meeting.time}
-                          </p>
-                          {meeting.minutes && (
-                            <p className="meeting-minutes">Minutes: {meeting.minutes.substring(0, 50)}...</p>
-                          )}
-                        </div>
-                        {canManageData() && (
-                          <button
-                            className="delete-btn"
-                            onClick={() => deleteMeeting(meeting.id)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

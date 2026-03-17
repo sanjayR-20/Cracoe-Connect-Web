@@ -511,6 +511,68 @@ export const useDataStore = create((set, get) => ({
     });
   },
 
+  updateTask: (taskId, updates) => {
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const wasCompleted = task.status === 'Completed';
+    const isNowCompleted = updates.status === 'Completed';
+
+    set(state => ({
+      tasks: state.tasks.map(t =>
+        t.id === taskId ? { ...t, ...updates } : t
+      ),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase
+        .from('tasks')
+        .update(serializeTask({ ...task, ...updates }))
+        .eq('id', taskId)
+        .then(({ error }) => {
+          if (error) set({ supabaseError: error.message });
+        });
+    }
+
+    // Handle points for completion
+    if (isNowCompleted && !wasCompleted) {
+      const difficulty = task.difficulty || 'medium';
+      const pointsValue = DIFFICULTY_POINTS[difficulty] || 15;
+      const deadline = new Date(task.deadline);
+      const now = new Date();
+      const isOnTime = now <= deadline;
+
+      if (isOnTime) {
+        set(state => ({
+          users: state.users.map(user =>
+            task.assignedToId.includes(user.id)
+              ? { ...user, points: (user.points || 0) + pointsValue }
+              : user
+          ),
+        }));
+
+        if (isSupabaseConfigured()) {
+          task.assignedToId.forEach(userId => {
+            const user = get().users.find(u => u.id === userId);
+            if (user) {
+              supabase
+                .from('users')
+                .update({ points: user.points })
+                .eq('id', userId)
+                .then(({ error }) => {
+                  if (error) set({ supabaseError: error.message });
+                });
+            }
+          });
+        }
+      }
+    }
+
+    task.assignedToId.forEach(userId => {
+        sendNotification('Task Status Updated', `${task.title} is now ${updates.status}`);
+    });
+  },
+
   canUpdateTaskStatus: () => {
     const currentUser = get().getCurrentUser();
     if (!currentUser) return false;

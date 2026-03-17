@@ -1,572 +1,490 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/ProfileScreen.css';
-import { 
-  ArrowLeft, 
-  Camera, 
-  User, 
-  MapPin, 
-  Globe, 
-  Languages, 
-  BookOpen, 
-  Mail, 
-  Phone, 
-  Github, 
-  Linkedin, 
-  Briefcase, 
-  Code, 
-  Heart, 
-  Award,
-  Lock,
-  Eye,
-  EyeOff,
-  Save,
-  Edit2
-} from 'lucide-react';
 
-export default function ProfileScreen() {
+const ProfileScreen = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-  const getCurrentUser = useDataStore((state) => state.getCurrentUser);
+  const currentUser = useDataStore((state) => state.getCurrentUser());
   const updateUserProfile = useDataStore((state) => state.updateUserProfile);
   const changePassword = useDataStore((state) => state.changePassword);
 
-  const currentUser = getCurrentUser();
-
   const [isEditing, setIsEditing] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [profile, setProfile] = useState({
-    profilePhoto: currentUser?.profilePhoto || '',
-    name: currentUser?.name || '',
-    location: currentUser?.location || '',
-    gender: currentUser?.gender || '',
-    nationality: currentUser?.nationality || '',
-    knownLanguages: currentUser?.knownLanguages?.join(', ') || '',
-    shortBio: currentUser?.shortBio || '',
-    education: currentUser?.education || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
-    github: currentUser?.github || '',
-    linkedin: currentUser?.linkedin || '',
-    skills: currentUser?.skills?.join(', ') || '',
-    projectsDone: currentUser?.projectsDone?.join(', ') || '',
-    interests: currentUser?.interests?.join(', ') || '',
-    experience: currentUser?.experience || '',
-  });
-
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [editData, setEditData] = useState({});
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: '',
+    confirmPassword: ''
   });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
-  const handlePhotoClick = () => {
-    if (isEditing) {
-      fileInputRef.current?.click();
-    }
-  };
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile({ ...profile, profilePhoto: reader.result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!profile.name.trim()) newErrors.name = 'Name is required';
-    if (!profile.email.trim()) newErrors.email = 'Email is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSaveProfile = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    setSuccessMessage('');
-
-    const profileData = {
-      profilePhoto: profile.profilePhoto,
-      name: profile.name.trim(),
-      location: profile.location.trim(),
-      gender: profile.gender,
-      nationality: profile.nationality.trim(),
-      knownLanguages: profile.knownLanguages.split(',').map((l) => l.trim()).filter(Boolean),
-      shortBio: profile.shortBio.trim(),
-      education: profile.education.trim(),
-      email: profile.email.trim(),
-      phone: profile.phone.trim(),
-      github: profile.github.trim(),
-      linkedin: profile.linkedin.trim(),
-      skills: profile.skills.split(',').map((s) => s.trim()).filter(Boolean),
-      projectsDone: profile.projectsDone.split(',').map((p) => p.trim()).filter(Boolean),
-      interests: profile.interests.split(',').map((i) => i.trim()).filter(Boolean),
-      experience: profile.experience.trim(),
-      profileCompleted: true,
-    };
-
-    try {
-      await updateUserProfile(currentUser.id, profileData);
-      setSuccessMessage('Profile updated successfully!');
-      setIsEditing(false);
-    } catch (error) {
-      setErrors({ submit: 'Failed to save profile. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    setErrors({});
-
-    if (!passwordData.currentPassword) {
-      setErrors({ password: 'Current password is required' });
-      return;
-    }
-
-    if (!passwordData.newPassword) {
-      setErrors({ password: 'New password is required' });
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      setErrors({ password: 'New password must be at least 6 characters' });
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setErrors({ password: 'New passwords do not match' });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await changePassword(currentUser.id, passwordData.currentPassword, passwordData.newPassword);
-      setSuccessMessage('Password changed successfully!');
-      setShowPasswordModal(false);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      setErrors({ password: error.message || 'Failed to change password' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [error, setError] = useState('');
 
   if (!currentUser) {
-    navigate('/');
-    return null;
-  }
-
-  const showPoints = !['CEO', 'COO'].includes(currentUser.designation);
-
-  return (
-    <div className="profile-screen-container">
-      <header className="profile-header">
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>
-          <ArrowLeft size={20} /> Back
-        </button>
-        <div className="header-actions">
-          {!isEditing ? (
-            <button className="edit-btn" onClick={() => setIsEditing(true)}>
-              <Edit2 size={18} /> Edit Profile
-            </button>
-          ) : (
-            <button className="save-btn" onClick={handleSaveProfile} disabled={loading}>
-              <Save size={18} /> {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          )}
-          <button className="password-btn" onClick={() => setShowPasswordModal(true)}>
-            <Lock size={18} /> Change Password
+    return (
+      <div className="profile-container">
+        <div className="profile-error">
+          <p>User not found</p>
+          <button className="btn-back" onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
           </button>
         </div>
-      </header>
+      </div>
+    );
+  }
 
-      {successMessage && (
-        <div className="success-message">{successMessage}</div>
-      )}
+  const handleEdit = () => {
+    setEditData({
+      name: currentUser.name || '',
+      email: currentUser.email || '',
+      phone: currentUser.phone || '',
+      location: currentUser.location || '',
+      shortBio: currentUser.shortBio || '',
+      education: currentUser.education || '',
+      github: currentUser.github || '',
+      linkedin: currentUser.linkedin || '',
+      skills: currentUser.skills || [],
+      interests: currentUser.interests || [],
+      experience: currentUser.experience || ''
+    });
+    setIsEditing(true);
+    setError('');
+  };
 
-      {errors.submit && (
-        <div className="error-message">{errors.submit}</div>
-      )}
+  const handleSave = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await updateUserProfile(currentUser.id, editData);
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <div className="profile-content">
-        {/* Profile Header Card */}
-        <div className="profile-card main-card">
-          <div className="profile-photo-section" onClick={handlePhotoClick}>
-            {profile.profilePhoto ? (
-              <img src={profile.profilePhoto} alt="Profile" className="profile-photo" />
-            ) : (
-              <div className="profile-photo-placeholder">
-                <User size={48} />
-              </div>
-            )}
-            {isEditing && (
-              <div className="photo-overlay">
-                <Camera size={24} />
-                <span>Change Photo</span>
-              </div>
-            )}
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handlePhotoChange}
-            accept="image/*"
-            hidden
-          />
-          <div className="profile-main-info">
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  className="edit-input name-input"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  placeholder="Your Name"
-                />
-                {errors.name && <span className="error">{errors.name}</span>}
-              </>
-            ) : (
-              <h1>{currentUser.name}</h1>
-            )}
-            <p className="designation">{currentUser.designation}</p>
-            {showPoints && (
-              <div className="points-display">
-                <Award size={18} />
-                <span>{currentUser.points || 0} Points</span>
-              </div>
-            )}
-          </div>
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditData({});
+    setError('');
+  };
+
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      await changePassword(currentUser.id, passwordData.currentPassword, passwordData.newPassword);
+      setIsChangingPassword(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      alert('Password changed successfully');
+    } catch (err) {
+      setError(err.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name) => {
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+  };
+
+  const formatSkills = (skills) => {
+    if (!skills || skills.length === 0) return 'Not specified';
+    return Array.isArray(skills) ? skills.join(', ') : skills;
+  };
+
+  const formatInterests = (interests) => {
+    if (!interests || interests.length === 0) return 'Not specified';
+    return Array.isArray(interests) ? interests.join(', ') : interests;
+  };
+
+  return (
+    <div className="profile-container">
+      {/* Header */}
+      <div className="profile-header">
+        <div className="header-left">
+          <h1>Profile</h1>
         </div>
-
-        {/* Basic Information */}
-        <div className="profile-card">
-          <h2><User size={20} /> Basic Information</h2>
-          
-          <div className="info-grid">
-            <div className="info-item">
-              <label><MapPin size={16} /> Location</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.location}
-                  onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                  placeholder="City, Country"
-                />
-              ) : (
-                <span>{currentUser.location || 'Not specified'}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label>Gender</label>
-              {isEditing ? (
-                <select
-                  value={profile.gender}
-                  onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
-                >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </select>
-              ) : (
-                <span>{currentUser.gender || 'Not specified'}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label><Globe size={16} /> Nationality</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.nationality}
-                  onChange={(e) => setProfile({ ...profile, nationality: e.target.value })}
-                  placeholder="Your nationality"
-                />
-              ) : (
-                <span>{currentUser.nationality || 'Not specified'}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label><Languages size={16} /> Languages</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.knownLanguages}
-                  onChange={(e) => setProfile({ ...profile, knownLanguages: e.target.value })}
-                  placeholder="English, Tamil (comma separated)"
-                />
-              ) : (
-                <span>{currentUser.knownLanguages?.join(', ') || 'Not specified'}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="info-item full-width">
-            <label>Short Bio</label>
-            {isEditing ? (
-              <textarea
-                value={profile.shortBio}
-                onChange={(e) => setProfile({ ...profile, shortBio: e.target.value })}
-                placeholder="Tell us about yourself..."
-                rows={3}
-              />
-            ) : (
-              <p className="bio-text">{currentUser.shortBio || 'No bio provided'}</p>
-            )}
-          </div>
-
-          <div className="info-item">
-            <label><BookOpen size={16} /> Education</label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={profile.education}
-                onChange={(e) => setProfile({ ...profile, education: e.target.value })}
-                placeholder="Your highest qualification"
-              />
-            ) : (
-              <span>{currentUser.education || 'Not specified'}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="profile-card">
-          <h2><Mail size={20} /> Contact Information</h2>
-          
-          <div className="info-grid">
-            <div className="info-item">
-              <label><Mail size={16} /> Email</label>
-              {isEditing ? (
-                <>
-                  <input
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    placeholder="your.email@example.com"
-                  />
-                  {errors.email && <span className="error">{errors.email}</span>}
-                </>
-              ) : (
-                <span>{currentUser.email}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label><Phone size={16} /> Phone</label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  placeholder="+91 9876543210"
-                />
-              ) : (
-                <span>{currentUser.phone || 'Not specified'}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label><Github size={16} /> GitHub</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.github}
-                  onChange={(e) => setProfile({ ...profile, github: e.target.value })}
-                  placeholder="github.com/username"
-                />
-              ) : (
-                <span>{currentUser.github || 'Not specified'}</span>
-              )}
-            </div>
-
-            <div className="info-item">
-              <label><Linkedin size={16} /> LinkedIn</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.linkedin}
-                  onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-                  placeholder="linkedin.com/in/username"
-                />
-              ) : (
-                <span>{currentUser.linkedin || 'Not specified'}</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Professional Information */}
-        <div className="profile-card">
-          <h2><Briefcase size={20} /> Professional Information</h2>
-          
-          <div className="info-item full-width">
-            <label><Code size={16} /> Skills</label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={profile.skills}
-                onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
-                placeholder="JavaScript, React, Node.js (comma separated)"
-              />
-            ) : (
-              <div className="tags">
-                {currentUser.skills?.length > 0 
-                  ? currentUser.skills.map((skill, idx) => (
-                      <span key={idx} className="tag">{skill}</span>
-                    ))
-                  : <span className="no-data">No skills listed</span>
-                }
-              </div>
-            )}
-          </div>
-
-          <div className="info-item full-width">
-            <label><Award size={16} /> Projects Done</label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={profile.projectsDone}
-                onChange={(e) => setProfile({ ...profile, projectsDone: e.target.value })}
-                placeholder="Project 1, Project 2 (comma separated)"
-              />
-            ) : (
-              <div className="tags">
-                {currentUser.projectsDone?.length > 0 
-                  ? currentUser.projectsDone.map((project, idx) => (
-                      <span key={idx} className="tag project">{project}</span>
-                    ))
-                  : <span className="no-data">No projects listed</span>
-                }
-              </div>
-            )}
-          </div>
-
-          <div className="info-item full-width">
-            <label><Heart size={16} /> Interests</label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={profile.interests}
-                onChange={(e) => setProfile({ ...profile, interests: e.target.value })}
-                placeholder="Coding, Music, Sports (comma separated)"
-              />
-            ) : (
-              <div className="tags">
-                {currentUser.interests?.length > 0 
-                  ? currentUser.interests.map((interest, idx) => (
-                      <span key={idx} className="tag interest">{interest}</span>
-                    ))
-                  : <span className="no-data">No interests listed</span>
-                }
-              </div>
-            )}
-          </div>
-
-          <div className="info-item full-width">
-            <label><Briefcase size={16} /> Experience</label>
-            {isEditing ? (
-              <textarea
-                value={profile.experience}
-                onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
-                placeholder="Describe your work experience..."
-                rows={3}
-              />
-            ) : (
-              <p className="bio-text">{currentUser.experience || 'No experience details provided'}</p>
-            )}
-          </div>
+        <div className="header-actions">
+          <button className="btn-back" onClick={() => navigate('/dashboard')}>
+            ← Back
+          </button>
+          {!isEditing && !isChangingPassword && (
+            <>
+              <button className="btn-edit" onClick={handleEdit}>
+                ✏️ Edit Profile
+              </button>
+              <button className="btn-password" onClick={() => setIsChangingPassword(true)}>
+                🔒 Change Password
+              </button>
+            </>
+          )}
+          {isEditing && (
+            <>
+              <button className="btn-save" onClick={handleSave} disabled={loading}>
+                {loading ? '⏳' : '💾'} Save
+              </button>
+              <button className="btn-cancel" onClick={handleCancel}>
+                ✖️ Cancel
+              </button>
+            </>
+          )}
+          {isChangingPassword && (
+            <>
+              <button className="btn-save" onClick={handlePasswordChange} disabled={loading}>
+                {loading ? '⏳' : '🔒'} Update Password
+              </button>
+              <button className="btn-cancel" onClick={() => setIsChangingPassword(false)}>
+                ✖️ Cancel
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Change Password Modal */}
-      {showPasswordModal && (
-        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2><Lock size={20} /> Change Password</h2>
-            
-            <div className="form-group">
-              <label>Current Password</label>
-              <div className="password-input-wrapper">
-                <input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  placeholder="Enter current password"
-                />
-                <button 
-                  type="button" 
-                  className="toggle-password"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+      {error && (
+        <div style={{ 
+          maxWidth: '1400px', 
+          margin: '0 auto', 
+          padding: '16px 24px',
+          color: 'var(--vibrant-red)',
+          background: 'var(--red-10)',
+          borderRadius: 'var(--radius-small)',
+          marginBottom: '16px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="profile-content">
+        {/* Lanyard Section */}
+        <div className="lanyard-section">
+          <div className="lanyard-container">
+            <div className="id-card">
+              <div className="card-header">
+                <div className="company-logo">CRACOE</div>
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>New Password</label>
-              <div className="password-input-wrapper">
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  placeholder="Enter new password"
-                />
-                <button 
-                  type="button" 
-                  className="toggle-password"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                >
-                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              <div className="card-body">
+                <div className="profile-photo">
+                  {currentUser.profilePhoto ? (
+                    <img src={currentUser.profilePhoto} alt="Profile" />
+                  ) : (
+                    <div className="photo-placeholder">
+                      {getInitials(currentUser.name)}
+                    </div>
+                  )}
+                </div>
+                <div className="card-info">
+                  <h3>{currentUser.name}</h3>
+                  <p>{currentUser.designation}</p>
+                  <div className="employee-id">ID: {currentUser.id.slice(-8).toUpperCase()}</div>
+                </div>
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Confirm New Password</label>
-              <input
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                placeholder="Confirm new password"
-              />
-            </div>
-
-            {errors.password && <div className="error-message">{errors.password}</div>}
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowPasswordModal(false)}>
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={handleChangePassword} disabled={loading}>
-                {loading ? 'Changing...' : 'Change Password'}
-              </button>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Profile Details */}
+        <div className="profile-details">
+          {/* Basic Information */}
+          <div className="detail-section">
+            <div className="section-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <h2>Basic Information</h2>
+            </div>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <label>Full Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={editData.name}
+                    onChange={(e) => setEditData({...editData, name: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.name}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Email</label>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    className="edit-input"
+                    value={editData.email}
+                    onChange={(e) => setEditData({...editData, email: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.email}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Phone</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    className="edit-input"
+                    value={editData.phone}
+                    onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.phone || 'Not provided'}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Location</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={editData.location}
+                    onChange={(e) => setEditData({...editData, location: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.location || 'Not specified'}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Designation</label>
+                <span>{currentUser.designation}</span>
+              </div>
+              <div className="detail-item">
+                <label>Points</label>
+                <span className="points-display">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  {currentUser.points || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Information */}
+          <div className="detail-section">
+            <div className="section-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/>
+              </svg>
+              <h2>Professional Details</h2>
+            </div>
+            <div className="detail-grid">
+              <div className="detail-item full-width">
+                <label>Bio</label>
+                {isEditing ? (
+                  <textarea
+                    className="edit-textarea"
+                    value={editData.shortBio}
+                    onChange={(e) => setEditData({...editData, shortBio: e.target.value})}
+                    placeholder="Tell us about yourself..."
+                  />
+                ) : (
+                  <span>{currentUser.shortBio || 'No bio provided'}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Education</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={editData.education}
+                    onChange={(e) => setEditData({...editData, education: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.education || 'Not specified'}</span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>Experience</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={editData.experience}
+                    onChange={(e) => setEditData({...editData, experience: e.target.value})}
+                  />
+                ) : (
+                  <span>{currentUser.experience || 'Not specified'}</span>
+                )}
+              </div>
+              <div className="detail-item full-width">
+                <label>Skills</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={Array.isArray(editData.skills) ? editData.skills.join(', ') : editData.skills}
+                    onChange={(e) => setEditData({...editData, skills: e.target.value.split(',').map(s => s.trim())})}
+                    placeholder="JavaScript, React, Node.js..."
+                  />
+                ) : (
+                  <span>{formatSkills(currentUser.skills)}</span>
+                )}
+              </div>
+              <div className="detail-item full-width">
+                <label>Interests</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={Array.isArray(editData.interests) ? editData.interests.join(', ') : editData.interests}
+                    onChange={(e) => setEditData({...editData, interests: e.target.value.split(',').map(s => s.trim())})}
+                    placeholder="Technology, Sports, Music..."
+                  />
+                ) : (
+                  <span>{formatInterests(currentUser.interests)}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Social Links */}
+          <div className="detail-section">
+            <div className="section-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zM14 21h-4v-1h4v1zm1.25-3H8.75V4h6.5v14z"/>
+              </svg>
+              <h2>Social Links</h2>
+            </div>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <label>GitHub</label>
+                {isEditing ? (
+                  <input
+                    type="url"
+                    className="edit-input"
+                    value={editData.github}
+                    onChange={(e) => setEditData({...editData, github: e.target.value})}
+                    placeholder="https://github.com/username"
+                  />
+                ) : (
+                  <span>
+                    {currentUser.github ? (
+                      <a href={currentUser.github} target="_blank" rel="noopener noreferrer">
+                        {currentUser.github}
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
+                  </span>
+                )}
+              </div>
+              <div className="detail-item">
+                <label>LinkedIn</label>
+                {isEditing ? (
+                  <input
+                    type="url"
+                    className="edit-input"
+                    value={editData.linkedin}
+                    onChange={(e) => setEditData({...editData, linkedin: e.target.value})}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                ) : (
+                  <span>
+                    {currentUser.linkedin ? (
+                      <a href={currentUser.linkedin} target="_blank" rel="noopener noreferrer">
+                        {currentUser.linkedin}
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Password Change Form */}
+          {isChangingPassword && (
+            <div className="detail-section">
+              <div className="section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                </svg>
+                <h2>Change Password</h2>
+              </div>
+              <div className="password-form">
+                <input
+                  type="password"
+                  className="edit-input"
+                  placeholder="Current Password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                />
+                <input
+                  type="password"
+                  className="edit-input"
+                  placeholder="New Password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                />
+                <input
+                  type="password"
+                  className="edit-input"
+                  placeholder="Confirm New Password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Permissions */}
+          {currentUser.permissions && (
+            <div className="detail-section">
+              <div className="section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                </svg>
+                <h2>Permissions</h2>
+              </div>
+              <div className="permissions-grid">
+                <div className="permission-item">
+                  <span className="permission-name">Assign Tasks</span>
+                  <span className={`permission-status ${currentUser.permissions.canAssignTask ? 'granted' : 'denied'}`}>
+                    {currentUser.permissions.canAssignTask ? 'Granted' : 'Denied'}
+                  </span>
+                </div>
+                <div className="permission-item">
+                  <span className="permission-name">Make Announcements</span>
+                  <span className={`permission-status ${currentUser.permissions.canAnnounce ? 'granted' : 'denied'}`}>
+                    {currentUser.permissions.canAnnounce ? 'Granted' : 'Denied'}
+                  </span>
+                </div>
+                <div className="permission-item">
+                  <span className="permission-name">Add Users</span>
+                  <span className={`permission-status ${currentUser.permissions.canAddUser ? 'granted' : 'denied'}`}>
+                    {currentUser.permissions.canAddUser ? 'Granted' : 'Denied'}
+                  </span>
+                </div>
+                <div className="permission-item">
+                  <span className="permission-name">Remove Users</span>
+                  <span className={`permission-status ${currentUser.permissions.canRemoveUser ? 'granted' : 'denied'}`}>
+                    {currentUser.permissions.canRemoveUser ? 'Granted' : 'Denied'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default ProfileScreen;

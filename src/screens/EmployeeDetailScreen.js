@@ -8,11 +8,26 @@ import { ArrowLeft, Mail, Briefcase } from 'lucide-react';
 export default function EmployeeDetailScreen() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
-  const getUser = useDataStore((state) => state.getUser);
-  const getTasksForUser = useDataStore((state) => state.getTasksForUser);
+  const { getUser, getTasksForUser, updateTask, getCurrentUser } = useDataStore(state => ({
+    getUser: state.getUser,
+    getTasksForUser: state.getTasksForUser,
+    updateTask: state.updateTask,
+    getCurrentUser: state.getCurrentUser,
+  }));
 
   const employee = getUser(employeeId);
   const employeeTasks = getTasksForUser(employeeId);
+  const currentUser = getCurrentUser();
+
+  const canCompleteTask = (task) => {
+    if (!currentUser) return false;
+    if (task.status === 'Completed') return false;
+
+    const isOwner = task.assignedToId.includes(currentUser.id) && currentUser.id === employeeId;
+    const isAdmin = ['Sharvesh S', 'Shree Vardhan'].includes(currentUser.name);
+
+    return isOwner || isAdmin;
+  };
 
   if (!employee) {
     return (
@@ -77,7 +92,17 @@ export default function EmployeeDetailScreen() {
           ) : (
             <div className="tasks-list">
               {employeeTasks.map((task) => (
-                <TaskItem key={task.id} task={task} />
+                <div key={task.id} className="task-item-wrapper">
+                  <TaskItem task={task} />
+                  {canCompleteTask(task) && (
+                    <button
+                      className="btn-complete-task"
+                      onClick={() => updateTask(task.id, { status: 'Completed' })}
+                    >
+                      Mark as Completed
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}

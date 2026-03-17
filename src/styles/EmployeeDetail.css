@@ -183,6 +183,35 @@
   gap: 12px;
 }
 
+.task-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #f9f9f9;
+  padding: 8px;
+  border-radius: var(--radius-nested);
+}
+
+.task-item-wrapper .task-item {
+  flex-grow: 1;
+}
+
+.btn-complete-task {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  font-weight: 700;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-complete-task:hover {
+  background: #16a34a;
+}
+
 @media (max-width: 600px) {
   .employee-detail-container {
     padding: 20px 15px;

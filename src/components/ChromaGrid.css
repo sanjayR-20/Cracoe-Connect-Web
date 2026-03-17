@@ -62,8 +62,6 @@
   inset: 0;
   pointer-events: none;
   z-index: 5;
-  backdrop-filter: grayscale(1) brightness(0.85);
-  -webkit-backdrop-filter: grayscale(1) brightness(0.85);
   background: rgba(0, 0, 0, 0.001);
 
   mask-image: radial-gradient(
@@ -96,8 +94,6 @@
   inset: 0;
   pointer-events: none;
   z-index: 6;
-  backdrop-filter: grayscale(1) brightness(0.85);
-  -webkit-backdrop-filter: grayscale(1) brightness(0.85);
   background: rgba(0, 0, 0, 0.001);
 
   mask-image: radial-gradient(
