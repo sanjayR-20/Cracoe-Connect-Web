@@ -2,6 +2,7 @@ import React from 'react';
 import { useDataStore } from '../store/dataStore';
 import '../styles/EmployeeCard.css';
 import { Mail } from 'lucide-react';
+import { extractWorkType, getWorkTypeShortLabel } from '../lib/workTypeUtils';
 
 export default function EmployeeCard({ employee, onViewDetails, onAssignTask }) {
   const getTasksForUser = useDataStore((state) => state.getTasksForUser);
@@ -12,6 +13,7 @@ export default function EmployeeCard({ employee, onViewDetails, onAssignTask }) 
   const completedTasks = tasks.filter((t) => t.status === 'Completed').length;
   const pendingTasks = tasks.filter((t) => t.status === 'Pending').length;
   const inProgressTasks = tasks.filter((t) => t.status === 'In Progress').length;
+  const workType = extractWorkType(employee);
 
   return (
     <div className="employee-card">
@@ -21,7 +23,9 @@ export default function EmployeeCard({ employee, onViewDetails, onAssignTask }) 
         ) : (
           <div className="avatar">{employee.name.charAt(0)}</div>
         )}
-        <div className="designation-badge">{employee.role}</div>
+        <div className="header-badges">
+          <div className={`worktype-badge ${workType}`}>{getWorkTypeShortLabel(workType)}</div>
+        </div>
       </div>
 
       <div className="card-content">

@@ -17,44 +17,99 @@ import {
   Hand,
   Grid,
   Maximize2,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
-import { supabase } from '../lib/supabaseClient';
+import {
+  buildMeetingJoinLink,
+  generateMeetingRoomCode,
+  getMeetingTiming,
+  normalizeMeetingRoomCode,
+  parseMeetingInput,
+} from '../lib/meetingUtils';
 import '../styles/VideoMeet.css';
-
-// Generate unique room ID (Google Meet style: abc-defg-hij)
-const generateRoomId = () => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz';
-  const segments = [];
-  for (let i = 0; i < 3; i++) {
-    let segment = '';
-    const len = i === 1 ? 4 : 3;
-    for (let j = 0; j < len; j++) {
-      segment += chars[Math.floor(Math.random() * chars.length)];
-    }
-    segments.push(segment);
-  }
-  return segments.join('-');
-};
 
 // Generate unique peer ID
 const generatePeerId = () => {
   return `peer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 };
 
-// ICE servers for WebRTC
-const ICE_SERVERS = [
+const parseCsv = (value = '') => {
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+};
+
+const DEFAULT_STUN_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
   { urls: 'stun:stun3.l.google.com:19302' },
 ];
 
+const buildIceServers = () => {
+  const turnUrls = parseCsv(
+    process.env.REACT_APP_TURN_URLS || process.env.NEXT_PUBLIC_TURN_URLS || ''
+  );
+  const turnUsername = process.env.REACT_APP_TURN_USERNAME || process.env.NEXT_PUBLIC_TURN_USERNAME || '';
+  const turnCredential = process.env.REACT_APP_TURN_CREDENTIAL || process.env.NEXT_PUBLIC_TURN_CREDENTIAL || '';
+
+  const servers = [...DEFAULT_STUN_SERVERS];
+
+  if (turnUrls.length > 0 && turnUsername && turnCredential) {
+    servers.push({
+      urls: turnUrls,
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
+
+  return servers;
+};
+
+const ICE_SERVERS = buildIceServers();
+
+const getSignalingUrl = () => {
+  const explicit = process.env.REACT_APP_SIGNALING_URL || process.env.NEXT_PUBLIC_SIGNALING_URL;
+  if (explicit) {
+    return explicit;
+  }
+
+  if (typeof window !== 'undefined') {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${wsProtocol}://${window.location.hostname}:3000/ws`;
+  }
+
+  return 'ws://localhost:3000/ws';
+};
+
+const shouldInitiateOffer = (localPeerId, remotePeerId) => {
+  return localPeerId.localeCompare(remotePeerId) > 0;
+};
+
+const normalizeParticipant = (peer) => {
+  return {
+    peerId: peer?.id || '',
+    name: peer?.name || 'Participant',
+    designation: peer?.designation || '',
+    profilePic: peer?.profilePic || '',
+    audioEnabled: peer?.audioEnabled !== false,
+    videoEnabled: peer?.videoEnabled !== false,
+    handRaised: Boolean(peer?.handRaised),
+    screenSharing: Boolean(peer?.screenSharing),
+  };
+};
+
 export default function VideoMeetScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const roomFromUrl = params.get('room') || '';
+  const roomFromUrl = normalizeMeetingRoomCode(params.get('room') || '');
+  const startFromUrl = params.get('start') || '';
+  const titleFromUrl = params.get('title') || '';
+  const meetingIdFromUrl = params.get('meeting') || '';
 
   const currentUser = useDataStore((state) => state.getCurrentUser());
 
@@ -62,6 +117,10 @@ export default function VideoMeetScreen() {
   const [view, setView] = useState(roomFromUrl ? 'preview' : 'home'); // home, preview, meeting
   const [roomId, setRoomId] = useState(roomFromUrl || '');
   const [joinRoomId, setJoinRoomId] = useState('');
+  const [scheduledStartAt, setScheduledStartAt] = useState(startFromUrl);
+  const [linkMeetingTitle, setLinkMeetingTitle] = useState(titleFromUrl);
+  const [linkMeetingId, setLinkMeetingId] = useState(meetingIdFromUrl);
+  const [clockNow, setClockNow] = useState(Date.now());
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
@@ -76,6 +135,11 @@ export default function VideoMeetScreen() {
   const [layout, setLayout] = useState('grid'); // grid, spotlight
   const [handRaised, setHandRaised] = useState(false);
   const [pinnedPeer, setPinnedPeer] = useState(null);
+  const [roomSettings, setRoomSettings] = useState({
+    hostPeerId: '',
+    lockAudio: false,
+    lockVideo: false,
+  });
 
   // Refs
   const localVideoRef = useRef(null);
@@ -85,6 +149,53 @@ export default function VideoMeetScreen() {
   const channelRef = useRef(null);
   const peerIdRef = useRef(generatePeerId());
   const messagesEndRef = useRef(null);
+  const roomIdRef = useRef(roomFromUrl || '');
+  const manualLeaveRef = useRef(false);
+
+  useEffect(() => {
+    const parsedInput = parseMeetingInput(`/video-meet${location.search || ''}`);
+    if (parsedInput.roomId) {
+      setRoomId(parsedInput.roomId);
+      roomIdRef.current = parsedInput.roomId;
+      setView((currentView) => (currentView === 'meeting' ? currentView : 'preview'));
+    }
+    setScheduledStartAt(parsedInput.start || '');
+    setLinkMeetingTitle(parsedInput.title || '');
+    setLinkMeetingId(parsedInput.meetingId || '');
+  }, [location.search]);
+
+  useEffect(() => {
+    setRoomSettings((prev) =>
+      prev.hostPeerId
+        ? prev
+        : {
+            ...prev,
+            hostPeerId: peerIdRef.current,
+        }
+    );
+  }, []);
+
+  const meetingTiming = getMeetingTiming(scheduledStartAt, clockNow);
+  const canJoinScheduledMeeting = meetingTiming.status !== 'upcoming';
+  const scheduledStartLabel = meetingTiming.startIso
+    ? new Date(meetingTiming.startIso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+    : '';
+  const shareableMeetingLink = buildMeetingJoinLink({
+    roomId,
+    startsAt: meetingTiming.startIso || scheduledStartAt,
+    title: linkMeetingTitle,
+    id: linkMeetingId,
+  });
+
+  useEffect(() => {
+    if (!scheduledStartAt) {
+      return undefined;
+    }
+    const timer = setInterval(() => {
+      setClockNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [scheduledStartAt]);
 
   // Get local media stream
   const getLocalStream = useCallback(async () => {
@@ -152,6 +263,29 @@ export default function VideoMeetScreen() {
     setPinnedPeer(prev => prev === peerId ? null : prev);
   };
 
+  const sendSignalEvent = useCallback((kind, payload = {}, targetPeerId) => {
+    const socket = channelRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN || !roomIdRef.current) {
+      return;
+    }
+
+    const message = {
+      type: 'signal',
+      roomId: roomIdRef.current,
+      peerId: peerIdRef.current,
+      data: {
+        kind,
+        ...payload,
+      },
+    };
+
+    if (targetPeerId) {
+      message.targetId = targetPeerId;
+    }
+
+    socket.send(JSON.stringify(message));
+  }, []);
+
   // Create peer connection
   const createPeerConnection = useCallback((remotePeerId, remoteName, remoteDesignation, remoteProfilePic) => {
     if (peerConnectionsRef.current.has(remotePeerId)) {
@@ -169,16 +303,8 @@ export default function VideoMeetScreen() {
 
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
-      if (event.candidate && channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'ice-candidate',
-          payload: {
-            fromPeerId: peerIdRef.current,
-            toPeerId: remotePeerId,
-            candidate: event.candidate,
-          },
-        });
+      if (event.candidate) {
+        sendSignalEvent('ice-candidate', { candidate: event.candidate }, remotePeerId);
       }
     };
 
@@ -215,7 +341,7 @@ export default function VideoMeetScreen() {
 
     peerConnectionsRef.current.set(remotePeerId, { pc, name: remoteName });
     return pc;
-  }, []);
+  }, [sendSignalEvent]);
 
   // Remove peer (wrapper for external use)
   const removePeer = useCallback((peerId) => {
@@ -233,25 +359,26 @@ export default function VideoMeetScreen() {
 
     switch (type) {
       case 'join': {
+        if (!shouldInitiateOffer(peerIdRef.current, fromPeerId)) {
+          createPeerConnection(fromPeerId, fromName, fromDesignation, fromProfilePic);
+          break;
+        }
+
         // New peer joined, create offer
         const pc = createPeerConnection(fromPeerId, fromName, fromDesignation, fromProfilePic);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        
-        if (channelRef.current) {
-          channelRef.current.send({
-            type: 'broadcast',
-            event: 'offer',
-            payload: {
-              fromPeerId: peerIdRef.current,
-              fromName: currentUser?.name || 'Guest',
-              fromDesignation: currentUser?.designation || '',
-              fromProfilePic: currentUser?.profilePic || '',
-              toPeerId: fromPeerId,
-              sdp: offer,
-            },
-          });
-        }
+
+        sendSignalEvent(
+          'offer',
+          {
+            fromName: currentUser?.name || 'Guest',
+            fromDesignation: currentUser?.designation || '',
+            fromProfilePic: currentUser?.profilePic || '',
+            sdp: offer,
+          },
+          fromPeerId
+        );
         break;
       }
       
@@ -260,21 +387,17 @@ export default function VideoMeetScreen() {
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        
-        if (channelRef.current) {
-          channelRef.current.send({
-            type: 'broadcast',
-            event: 'answer',
-            payload: {
-              fromPeerId: peerIdRef.current,
-              fromName: currentUser?.name || 'Guest',
-              fromDesignation: currentUser?.designation || '',
-              fromProfilePic: currentUser?.profilePic || '',
-              toPeerId: fromPeerId,
-              sdp: answer,
-            },
-          });
-        }
+
+        sendSignalEvent(
+          'answer',
+          {
+            fromName: currentUser?.name || 'Guest',
+            fromDesignation: currentUser?.designation || '',
+            fromProfilePic: currentUser?.profilePic || '',
+            sdp: answer,
+          },
+          fromPeerId
+        );
         break;
       }
       
@@ -335,7 +458,7 @@ export default function VideoMeetScreen() {
       default:
         break;
     }
-  }, [createPeerConnection, removePeer, currentUser]);
+  }, [createPeerConnection, removePeer, currentUser, sendSignalEvent]);
 
   // Join meeting room
   const joinRoom = useCallback(async (meetingRoomId) => {
@@ -344,80 +467,266 @@ export default function VideoMeetScreen() {
       return;
     }
 
+    const normalizedRoomId = normalizeMeetingRoomCode(meetingRoomId);
+    if (!normalizedRoomId) {
+      setError('Please enter a valid meeting code');
+      setConnectionStatus('error');
+      return;
+    }
+
     setConnectionStatus('connecting');
     setError('');
-    
-    // Subscribe to Supabase realtime channel
-    const channel = supabase.channel(`meeting:${meetingRoomId}`, {
-      config: {
-        broadcast: { self: false },
-      },
-    });
 
-    channel
-      .on('broadcast', { event: 'join' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'join', ...payload });
-      })
-      .on('broadcast', { event: 'offer' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'offer', ...payload });
-      })
-      .on('broadcast', { event: 'answer' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'answer', ...payload });
-      })
-      .on('broadcast', { event: 'ice-candidate' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'ice-candidate', ...payload });
-      })
-      .on('broadcast', { event: 'leave' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'leave', ...payload });
-      })
-      .on('broadcast', { event: 'chat' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'chat', ...payload });
-      })
-      .on('broadcast', { event: 'hand-raised' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'hand-raised', ...payload });
-      })
-      .on('broadcast', { event: 'media-state' }, ({ payload }) => {
-        handleSignalingMessage({ type: 'media-state', ...payload });
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          channelRef.current = channel;
-          setConnectionStatus('connected');
-          setView('meeting');
-          setRoomId(meetingRoomId);
-          
-          // Announce presence
-          channel.send({
-            type: 'broadcast',
-            event: 'join',
-            payload: {
-              fromPeerId: peerIdRef.current,
-              fromName: currentUser?.name || 'Guest',
-              fromDesignation: currentUser?.designation || '',
-              fromProfilePic: currentUser?.profilePic || '',
-            },
+    const stream = localStreamRef.current || (await getLocalStream());
+    if (!stream) {
+      setConnectionStatus('error');
+      return;
+    }
+
+    if (channelRef.current) {
+      channelRef.current.close();
+      channelRef.current = null;
+    }
+
+    peerConnectionsRef.current.forEach(({ pc }) => pc.close());
+    peerConnectionsRef.current.clear();
+    setParticipants([]);
+
+    roomIdRef.current = normalizedRoomId;
+    manualLeaveRef.current = false;
+
+    let socket;
+    try {
+      socket = new WebSocket(getSignalingUrl());
+    } catch (err) {
+      setError('Failed to initialize meeting connection.');
+      setConnectionStatus('error');
+      return;
+    }
+
+    channelRef.current = socket;
+
+    socket.onopen = () => {
+      socket.send(
+        JSON.stringify({
+          type: 'join',
+          roomId: normalizedRoomId,
+          peerId: peerIdRef.current,
+          state: {
+            name: currentUser?.name || 'Guest',
+            designation: currentUser?.designation || '',
+            profilePic: currentUser?.profilePic || '',
+            audioEnabled,
+            videoEnabled,
+            handRaised,
+            screenSharing,
+          },
+        })
+      );
+    };
+
+    socket.onmessage = ({ data }) => {
+      let message;
+      try {
+        message = JSON.parse(data);
+      } catch (err) {
+        return;
+      }
+
+      if (message.type === 'peers') {
+        setConnectionStatus('connected');
+        setView('meeting');
+        setRoomId(normalizedRoomId);
+        const peers = Array.isArray(message.peers) ? message.peers : [];
+        setRoomSettings((prev) => ({
+          ...prev,
+          hostPeerId: peers.length > 0 ? peers[0].id : peerIdRef.current,
+        }));
+        setParticipants((prev) =>
+          peers.map((peer) => {
+            const existing = prev.find((participant) => participant.peerId === peer.id);
+            return {
+              ...normalizeParticipant(peer),
+              stream: existing?.stream,
+            };
+          })
+        );
+        peers.forEach((peer) => {
+          handleSignalingMessage({
+            type: 'join',
+            fromPeerId: peer.id,
+            fromName: peer.name,
+            fromDesignation: peer.designation,
+            fromProfilePic: peer.profilePic,
           });
-        } else if (status === 'CHANNEL_ERROR') {
-          setError('Failed to join meeting. Please try again.');
-          setConnectionStatus('error');
+        });
+        return;
+      }
+
+      if (message.type === 'peer-joined') {
+        if (message.peer?.id) {
+          setParticipants((prev) => {
+            const existing = prev.find((participant) => participant.peerId === message.peer.id);
+            if (existing) {
+              return prev.map((participant) =>
+                participant.peerId === message.peer.id
+                  ? {
+                      ...participant,
+                      ...normalizeParticipant(message.peer),
+                      stream: participant.stream,
+                    }
+                  : participant
+              );
+            }
+            return [...prev, normalizeParticipant(message.peer)];
+          });
         }
-      });
-  }, [handleSignalingMessage, currentUser]);
+
+        handleSignalingMessage({
+          type: 'join',
+          fromPeerId: message.peer?.id,
+          fromName: message.peer?.name,
+          fromDesignation: message.peer?.designation,
+          fromProfilePic: message.peer?.profilePic,
+        });
+
+        return;
+      }
+
+      if (message.type === 'peer-left') {
+        handleSignalingMessage({
+          type: 'leave',
+          fromPeerId: message.peerId,
+        });
+        return;
+      }
+
+      if (message.type === 'peer-updated' && message.peer?.id) {
+        setParticipants((prev) => {
+          const existing = prev.find((participant) => participant.peerId === message.peer.id);
+          if (!existing) {
+            return [
+              ...prev,
+              {
+                ...normalizeParticipant(message.peer),
+              },
+            ];
+          }
+
+          return prev.map((participant) =>
+            participant.peerId === message.peer.id
+              ? {
+                  ...participant,
+                  name: message.peer.name || participant.name,
+                  designation: message.peer.designation || participant.designation,
+                  profilePic: message.peer.profilePic || participant.profilePic,
+                  audioEnabled: message.peer.audioEnabled !== false,
+                  videoEnabled: message.peer.videoEnabled !== false,
+                  handRaised: Boolean(message.peer.handRaised),
+                  screenSharing: Boolean(message.peer.screenSharing),
+                }
+              : participant
+          );
+        });
+        return;
+      }
+
+      if (message.type === 'signal' && message.fromId && message.data?.kind) {
+        const signalPayload = message.data;
+        if (signalPayload.kind === 'room-settings' && signalPayload.settings) {
+          setRoomSettings((prev) => {
+            const nextSettings =
+              signalPayload.settings && typeof signalPayload.settings === 'object'
+                ? signalPayload.settings
+                : {};
+            const resolvedHostPeerId =
+              typeof nextSettings.hostPeerId === 'string' && nextSettings.hostPeerId.trim()
+                ? nextSettings.hostPeerId.trim()
+                : prev.hostPeerId || message.fromId;
+            if (
+              prev.hostPeerId &&
+              message.fromId !== prev.hostPeerId &&
+              message.fromId !== resolvedHostPeerId
+            ) {
+              return prev;
+            }
+            return {
+              ...prev,
+              hostPeerId: resolvedHostPeerId,
+              lockAudio: Boolean(nextSettings.lockAudio),
+              lockVideo: Boolean(nextSettings.lockVideo),
+            };
+          });
+          return;
+        }
+
+        handleSignalingMessage({
+          type: signalPayload.kind,
+          fromPeerId: message.fromId,
+          fromName: signalPayload.fromName || signalPayload.peer?.name,
+          fromDesignation: signalPayload.fromDesignation || signalPayload.peer?.designation,
+          fromProfilePic: signalPayload.fromProfilePic || signalPayload.peer?.profilePic,
+          candidate: signalPayload.candidate,
+          sdp: signalPayload.sdp,
+          message: signalPayload.message,
+          raised: signalPayload.raised,
+          audio: signalPayload.audio,
+          video: signalPayload.video,
+        });
+        return;
+      }
+
+      if (message.type === 'error') {
+        if (message.code === 'NOT_HOST') {
+          setError(message.message || 'Only the host can control this setting.');
+          return;
+        }
+        setConnectionStatus('error');
+        setError(message.message || 'Meeting server error.');
+      }
+    };
+
+    socket.onerror = () => {
+      setError('Failed to connect to meeting server.');
+      setConnectionStatus('error');
+    };
+
+    socket.onclose = () => {
+      if (manualLeaveRef.current) {
+        return;
+      }
+      peerConnectionsRef.current.forEach(({ pc }) => pc.close());
+      peerConnectionsRef.current.clear();
+      setParticipants([]);
+      setConnectionStatus('disconnected');
+      setError('Connection lost. Please rejoin the meeting.');
+      channelRef.current = null;
+    };
+  }, [
+    handleSignalingMessage,
+    currentUser,
+    audioEnabled,
+    videoEnabled,
+    handRaised,
+    screenSharing,
+    getLocalStream,
+  ]);
 
   // Leave meeting
   const leaveRoom = useCallback(() => {
     // Notify peers
     if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'leave',
-        payload: {
-          fromPeerId: peerIdRef.current,
-          fromName: currentUser?.name || 'Guest',
-        },
-      });
-      
-      supabase.removeChannel(channelRef.current);
+      manualLeaveRef.current = true;
+      if (channelRef.current.readyState === WebSocket.OPEN) {
+        channelRef.current.send(
+          JSON.stringify({
+            type: 'leave',
+            roomId: roomIdRef.current,
+            peerId: peerIdRef.current,
+          })
+        );
+      }
+      channelRef.current.close();
       channelRef.current = null;
     }
 
@@ -440,26 +749,63 @@ export default function VideoMeetScreen() {
     setConnectionStatus('disconnected');
     setScreenSharing(false);
     setPinnedPeer(null);
+    roomIdRef.current = '';
     navigate('/dashboard');
-  }, [currentUser, navigate]);
+  }, [navigate]);
+
+  useEffect(() => {
+    const peerConnections = peerConnectionsRef.current;
+
+    return () => {
+      manualLeaveRef.current = true;
+      if (channelRef.current) {
+        channelRef.current.close();
+        channelRef.current = null;
+      }
+      peerConnections.forEach(({ pc }) => pc.close());
+      peerConnections.clear();
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
+        screenStreamRef.current = null;
+      }
+    };
+  }, []);
 
   // Broadcast media state change
-  const broadcastMediaState = useCallback((audio, video) => {
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'media-state',
-        payload: {
-          fromPeerId: peerIdRef.current,
-          audio,
-          video,
-        },
-      });
+  const broadcastMediaState = useCallback((audio, video, overrides = {}) => {
+    const socket = channelRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(
+        JSON.stringify({
+          type: 'update-state',
+          roomId: roomIdRef.current,
+          peerId: peerIdRef.current,
+          state: {
+            name: currentUser?.name || 'Guest',
+            designation: currentUser?.designation || '',
+            profilePic: currentUser?.profilePic || '',
+            audioEnabled: audio,
+            videoEnabled: video,
+            handRaised: typeof overrides.handRaised === 'boolean' ? overrides.handRaised : handRaised,
+            screenSharing:
+              typeof overrides.screenSharing === 'boolean' ? overrides.screenSharing : screenSharing,
+          },
+        })
+      );
     }
-  }, []);
+  }, [currentUser, handRaised, screenSharing]);
 
   // Toggle audio
   const toggleAudio = useCallback(() => {
+    const lockedForThisPeer = roomSettings.lockAudio && roomSettings.hostPeerId !== peerIdRef.current;
+    if (lockedForThisPeer) {
+      return;
+    }
+
     if (localStreamRef.current) {
       const newState = !audioEnabled;
       localStreamRef.current.getAudioTracks().forEach(track => {
@@ -468,10 +814,15 @@ export default function VideoMeetScreen() {
       setAudioEnabled(newState);
       broadcastMediaState(newState, videoEnabled);
     }
-  }, [audioEnabled, videoEnabled, broadcastMediaState]);
+  }, [audioEnabled, videoEnabled, broadcastMediaState, roomSettings.lockAudio, roomSettings.hostPeerId]);
 
   // Toggle video
   const toggleVideo = useCallback(() => {
+    const lockedForThisPeer = roomSettings.lockVideo && roomSettings.hostPeerId !== peerIdRef.current;
+    if (lockedForThisPeer) {
+      return;
+    }
+
     if (localStreamRef.current) {
       const newState = !videoEnabled;
       localStreamRef.current.getVideoTracks().forEach(track => {
@@ -480,10 +831,15 @@ export default function VideoMeetScreen() {
       setVideoEnabled(newState);
       broadcastMediaState(audioEnabled, newState);
     }
-  }, [videoEnabled, audioEnabled, broadcastMediaState]);
+  }, [videoEnabled, audioEnabled, broadcastMediaState, roomSettings.lockVideo, roomSettings.hostPeerId]);
 
   // Toggle screen sharing
   const toggleScreenShare = useCallback(async () => {
+    const videoLockedForThisPeer = roomSettings.lockVideo && roomSettings.hostPeerId !== peerIdRef.current;
+    if (videoLockedForThisPeer && !screenSharing) {
+      return;
+    }
+
     if (screenSharing) {
       // Stop screen sharing
       if (screenStreamRef.current) {
@@ -508,6 +864,7 @@ export default function VideoMeetScreen() {
       }
       
       setScreenSharing(false);
+      broadcastMediaState(audioEnabled, videoEnabled, { screenSharing: false });
     } else {
       try {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -537,6 +894,7 @@ export default function VideoMeetScreen() {
         };
 
         setScreenSharing(true);
+        broadcastMediaState(audioEnabled, videoEnabled, { screenSharing: true });
       } catch (err) {
         console.error('Error sharing screen:', err);
         if (err.name !== 'NotAllowedError') {
@@ -544,29 +902,25 @@ export default function VideoMeetScreen() {
         }
       }
     }
-  }, [screenSharing]);
+  }, [
+    screenSharing,
+    audioEnabled,
+    videoEnabled,
+    broadcastMediaState,
+    roomSettings.lockVideo,
+    roomSettings.hostPeerId,
+  ]);
 
   // Toggle hand raise
   const toggleHandRaise = useCallback(() => {
     const newState = !handRaised;
     setHandRaised(newState);
-    
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'hand-raised',
-        payload: {
-          fromPeerId: peerIdRef.current,
-          fromName: currentUser?.name || 'Guest',
-          raised: newState,
-        },
-      });
-    }
-  }, [handRaised, currentUser]);
+    broadcastMediaState(audioEnabled, videoEnabled, { handRaised: newState });
+  }, [handRaised, audioEnabled, videoEnabled, broadcastMediaState]);
 
   // Send chat message
   const sendMessage = useCallback(() => {
-    if (!newMessage.trim() || !channelRef.current) return;
+    if (!newMessage.trim()) return;
 
     const messageData = {
       fromPeerId: peerIdRef.current,
@@ -582,18 +936,123 @@ export default function VideoMeetScreen() {
     }]);
 
     // Broadcast to others
-    channelRef.current.send({
-      type: 'broadcast',
-      event: 'chat',
-      payload: messageData,
-    });
+    sendSignalEvent('chat', messageData);
 
     setNewMessage('');
-  }, [newMessage, currentUser]);
+  }, [newMessage, currentUser, sendSignalEvent]);
+
+  const isHost = roomSettings.hostPeerId === peerIdRef.current;
+
+  const updateRoomSettings = useCallback(
+    (updates) => {
+      if (!isHost) {
+        return;
+      }
+
+      setRoomSettings((prev) => {
+        const nextSettings = {
+          ...prev,
+          ...updates,
+          hostPeerId: prev.hostPeerId || peerIdRef.current,
+        };
+        sendSignalEvent('room-settings', { settings: nextSettings });
+        return nextSettings;
+      });
+    },
+    [isHost, sendSignalEvent]
+  );
+
+  useEffect(() => {
+    setRoomSettings((prev) => {
+      const activePeerIds = [
+        peerIdRef.current,
+        ...participants.map((participant) => participant.peerId).filter(Boolean),
+      ];
+      if (prev.hostPeerId && activePeerIds.includes(prev.hostPeerId)) {
+        return prev;
+      }
+
+      const sortedPeerIds = [...activePeerIds].sort((firstPeerId, secondPeerId) =>
+        firstPeerId.localeCompare(secondPeerId)
+      );
+      return {
+        ...prev,
+        hostPeerId: sortedPeerIds[0] || peerIdRef.current,
+      };
+    });
+  }, [participants]);
+
+  useEffect(() => {
+    if (isHost || !localStreamRef.current) {
+      return;
+    }
+
+    let nextAudioEnabled = audioEnabled;
+    let nextVideoEnabled = videoEnabled;
+    let nextScreenSharing = screenSharing;
+    let changed = false;
+
+    if (roomSettings.lockAudio && nextAudioEnabled) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = false;
+      });
+      nextAudioEnabled = false;
+      setAudioEnabled(false);
+      changed = true;
+    }
+
+    if (roomSettings.lockVideo && nextVideoEnabled) {
+      localStreamRef.current.getVideoTracks().forEach((track) => {
+        track.enabled = false;
+      });
+      nextVideoEnabled = false;
+      setVideoEnabled(false);
+      changed = true;
+    }
+
+    if (roomSettings.lockVideo && nextScreenSharing && screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => track.stop());
+      screenStreamRef.current = null;
+
+      if (localStreamRef.current) {
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+        peerConnectionsRef.current.forEach(({ pc }) => {
+          const sender = pc.getSenders().find((entry) => entry.track?.kind === 'video');
+          if (sender && videoTrack) {
+            sender.replaceTrack(videoTrack);
+          }
+        });
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStreamRef.current;
+        }
+      }
+
+      nextScreenSharing = false;
+      setScreenSharing(false);
+      changed = true;
+    }
+
+    if (changed) {
+      broadcastMediaState(nextAudioEnabled, nextVideoEnabled, {
+        handRaised,
+        screenSharing: nextScreenSharing,
+      });
+    }
+  }, [
+    isHost,
+    roomSettings.lockAudio,
+    roomSettings.lockVideo,
+    audioEnabled,
+    videoEnabled,
+    handRaised,
+    screenSharing,
+    broadcastMediaState,
+  ]);
 
   // Copy meeting link
   const copyMeetingLink = useCallback(async () => {
-    const link = `${window.location.origin}/video-meet?room=${roomId}`;
+    const link = shareableMeetingLink || `${window.location.origin}/video-meet?room=${roomId}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -601,7 +1060,7 @@ export default function VideoMeetScreen() {
     } catch (err) {
       console.error('Failed to copy:', err);
     }
-  }, [roomId]);
+  }, [roomId, shareableMeetingLink]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -612,21 +1071,49 @@ export default function VideoMeetScreen() {
 
   // Create new meeting
   const createMeeting = () => {
-    const newRoomId = generateRoomId();
+    const newRoomId = generateMeetingRoomCode();
     setRoomId(newRoomId);
+    roomIdRef.current = newRoomId;
+    setScheduledStartAt('');
+    setLinkMeetingTitle('');
+    setLinkMeetingId('');
+    setClockNow(Date.now());
     setView('preview');
   };
 
   // Join existing meeting
   const joinMeeting = () => {
-    if (joinRoomId.trim()) {
-      setRoomId(joinRoomId.trim().toLowerCase());
-      setView('preview');
+    if (!joinRoomId.trim()) {
+      return;
     }
+
+    const parsedInput = parseMeetingInput(joinRoomId.trim());
+    if (!parsedInput.roomId) {
+      setError('Enter a valid meeting code or full meeting link');
+      return;
+    }
+
+    setError('');
+    setRoomId(parsedInput.roomId);
+    roomIdRef.current = parsedInput.roomId;
+    setScheduledStartAt(parsedInput.start || '');
+    setLinkMeetingTitle(parsedInput.title || '');
+    setLinkMeetingId(parsedInput.meetingId || '');
+    setClockNow(Date.now());
+    setView('preview');
   };
 
   // Start meeting from preview
   const startMeeting = () => {
+    setClockNow(Date.now());
+    if (!canJoinScheduledMeeting) {
+      if (scheduledStartLabel) {
+        setError(`This meeting starts at ${scheduledStartLabel}. You can stay in preview until then.`);
+      } else {
+        setError('This meeting has not started yet.');
+      }
+      return;
+    }
     joinRoom(roomId);
   };
 
@@ -656,7 +1143,7 @@ export default function VideoMeetScreen() {
           <div className="home-hero">
             <div className="hero-left">
               <h2>Premium video meetings. Now free for everyone.</h2>
-              <p>We re-created Cracoe Meet—secure video calling for all your team's meetings.</p>
+              <p>We re-created Cracoe Meet - secure video calling for all your team's meetings.</p>
               
               <div className="action-buttons">
                 <button className="btn-primary" onClick={createMeeting}>
@@ -777,20 +1264,32 @@ export default function VideoMeetScreen() {
 
           <div className="preview-info">
             <h2>{currentUser?.name || 'Guest'}</h2>
+            {linkMeetingTitle && <p className="scheduled-title">{linkMeetingTitle}</p>}
             <p className="meeting-code">Meeting code: <strong>{roomId}</strong></p>
+            {meetingTiming.startIso && (
+              <div className={`scheduled-chip ${meetingTiming.status}`}>
+                <span>Start: {scheduledStartLabel}</span>
+                {meetingTiming.status === 'upcoming' && <strong>{meetingTiming.label}</strong>}
+                {meetingTiming.status === 'live' && <strong>Meeting is live</strong>}
+              </div>
+            )}
             
             {error && <div className="error-message">{error}</div>}
 
             <div className="preview-actions">
-              <button className="btn-primary" onClick={startMeeting}>
-                Join now
+              <button
+                className="btn-primary"
+                onClick={startMeeting}
+                disabled={!canJoinScheduledMeeting}
+              >
+                {canJoinScheduledMeeting ? 'Join now' : 'Waiting for start time'}
               </button>
             </div>
 
             <div className="share-link">
               <p>Share this link with others you want in the meeting</p>
               <div className="link-box">
-                <span>{window.location.origin}/video-meet?room={roomId}</span>
+                <span>{shareableMeetingLink || `${window.location.origin}/video-meet?room=${roomId}`}</span>
                 <button onClick={copyMeetingLink}>
                   {copied ? <Check size={18} /> : <Copy size={18} />}
                 </button>
@@ -836,9 +1335,9 @@ export default function VideoMeetScreen() {
                       autoPlay
                       playsInline
                       muted
-                      className={!videoEnabled ? 'video-off' : ''}
+                      className={!videoEnabled && !screenSharing ? 'video-off' : ''}
                     />
-                    {!videoEnabled && (
+                    {!videoEnabled && !screenSharing && (
                       <div className="video-placeholder">
                         <div className="avatar-xlarge">
                           {currentUser?.profilePic ? (
@@ -860,9 +1359,9 @@ export default function VideoMeetScreen() {
                           el.srcObject = spotlightPeer.stream;
                         }
                       }}
-                      className={!spotlightPeer.videoEnabled ? 'video-off' : ''}
+                      className={!spotlightPeer.videoEnabled && !spotlightPeer.screenSharing ? 'video-off' : ''}
                     />
-                    {!spotlightPeer.videoEnabled && (
+                    {!spotlightPeer.videoEnabled && !spotlightPeer.screenSharing && (
                       <div className="video-placeholder">
                         <div className="avatar-xlarge">
                           {spotlightPeer.profilePic ? (
@@ -877,9 +1376,14 @@ export default function VideoMeetScreen() {
                 )}
                 <div className="tile-info">
                   <span className="tile-name">{spotlightPeer.name} {spotlightPeer.isLocal ? '(You)' : ''}</span>
+                  {((spotlightPeer.isLocal && isHost) ||
+                    (!spotlightPeer.isLocal && roomSettings.hostPeerId === spotlightPeer.peerId)) && (
+                    <span className="tile-chip">Host</span>
+                  )}
                   {!spotlightPeer.audioEnabled && <MicOff size={16} />}
                   {spotlightPeer.handRaised && <Hand size={16} className="hand-icon" />}
                 </div>
+                {spotlightPeer.screenSharing && <div className="sharing-badge">Presenting</div>}
               </div>
               
               {/* Thumbnail strip */}
@@ -901,9 +1405,9 @@ export default function VideoMeetScreen() {
                               el.srcObject = screenSharing ? screenStreamRef.current : localStreamRef.current;
                             }
                           }}
-                          className={!videoEnabled ? 'video-off' : ''}
+                          className={!videoEnabled && !screenSharing ? 'video-off' : ''}
                         />
-                        {!videoEnabled && (
+                        {!videoEnabled && !screenSharing && (
                           <div className="video-placeholder">
                             <div className="avatar-small">
                               {currentUser?.profilePic ? (
@@ -925,9 +1429,9 @@ export default function VideoMeetScreen() {
                               el.srcObject = participant.stream;
                             }
                           }}
-                          className={!participant.videoEnabled ? 'video-off' : ''}
+                          className={!participant.videoEnabled && !participant.screenSharing ? 'video-off' : ''}
                         />
-                        {!participant.videoEnabled && (
+                        {!participant.videoEnabled && !participant.screenSharing && (
                           <div className="video-placeholder">
                             <div className="avatar-small">
                               {participant.profilePic ? (
@@ -960,9 +1464,9 @@ export default function VideoMeetScreen() {
                   autoPlay
                   playsInline
                   muted
-                  className={!videoEnabled ? 'video-off' : ''}
+                  className={!videoEnabled && !screenSharing ? 'video-off' : ''}
                 />
-                {!videoEnabled && (
+                {!videoEnabled && !screenSharing && (
                   <div className="video-placeholder">
                     <div className="avatar-medium">
                       {currentUser?.profilePic ? (
@@ -975,6 +1479,7 @@ export default function VideoMeetScreen() {
                 )}
                 <div className="tile-info">
                   <span className="tile-name">{currentUser?.name || 'You'} (You)</span>
+                  {isHost && <span className="tile-chip">Host</span>}
                   {!audioEnabled && <MicOff size={16} />}
                   {handRaised && <Hand size={16} className="hand-icon" />}
                 </div>
@@ -997,9 +1502,9 @@ export default function VideoMeetScreen() {
                         el.srcObject = participant.stream;
                       }
                     }}
-                    className={!participant.videoEnabled ? 'video-off' : ''}
+                    className={!participant.videoEnabled && !participant.screenSharing ? 'video-off' : ''}
                   />
-                  {!participant.videoEnabled && (
+                  {!participant.videoEnabled && !participant.screenSharing && (
                     <div className="video-placeholder">
                       <div className="avatar-medium">
                         {participant.profilePic ? (
@@ -1012,9 +1517,11 @@ export default function VideoMeetScreen() {
                   )}
                   <div className="tile-info">
                     <span className="tile-name">{participant.name}</span>
+                    {roomSettings.hostPeerId === participant.peerId && <span className="tile-chip">Host</span>}
                     {!participant.audioEnabled && <MicOff size={16} />}
                     {participant.handRaised && <Hand size={16} className="hand-icon" />}
                   </div>
+                  {participant.screenSharing && <div className="sharing-badge">Presenting</div>}
                   {pinnedPeer === participant.peerId && <div className="pinned-badge"><Maximize2 size={14} /></div>}
                 </div>
               ))}
@@ -1027,15 +1534,31 @@ export default function VideoMeetScreen() {
           <div className="controls-left">
             <span className="meeting-time">{roomId}</span>
             <span className={`connection-status ${connectionStatus}`}>
-              {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+              {connectionStatus === 'connected'
+                ? 'Connected'
+                : connectionStatus === 'connecting'
+                  ? 'Connecting...'
+                  : connectionStatus === 'error'
+                    ? 'Error'
+                    : 'Disconnected'}
             </span>
+            {isHost && <span className="connection-status connected">Host</span>}
+            {!isHost && roomSettings.lockAudio && <span className="connection-status error">Mic Locked</span>}
+            {!isHost && roomSettings.lockVideo && <span className="connection-status error">Cam Locked</span>}
           </div>
           
           <div className="controls-center">
             <button
               className={`control-btn ${!audioEnabled ? 'off' : ''}`}
               onClick={toggleAudio}
-              title={audioEnabled ? 'Turn off microphone' : 'Turn on microphone'}
+              title={
+                !isHost && roomSettings.lockAudio
+                  ? 'Host has locked microphones'
+                  : audioEnabled
+                    ? 'Turn off microphone'
+                    : 'Turn on microphone'
+              }
+              disabled={!isHost && roomSettings.lockAudio}
             >
               {audioEnabled ? <Mic size={22} /> : <MicOff size={22} />}
             </button>
@@ -1043,7 +1566,14 @@ export default function VideoMeetScreen() {
             <button
               className={`control-btn ${!videoEnabled ? 'off' : ''}`}
               onClick={toggleVideo}
-              title={videoEnabled ? 'Turn off camera' : 'Turn on camera'}
+              title={
+                !isHost && roomSettings.lockVideo
+                  ? 'Host has locked cameras'
+                  : videoEnabled
+                    ? 'Turn off camera'
+                    : 'Turn on camera'
+              }
+              disabled={!isHost && roomSettings.lockVideo}
             >
               {videoEnabled ? <Video size={22} /> : <VideoOff size={22} />}
             </button>
@@ -1176,7 +1706,10 @@ export default function VideoMeetScreen() {
                 )}
               </div>
               <div className="participant-info">
-                <span className="participant-name">{currentUser?.name || 'You'} (You)</span>
+                <div className="participant-name-row">
+                  <span className="participant-name">{currentUser?.name || 'You'} (You)</span>
+                  {isHost && <span className="participant-chip">Host</span>}
+                </div>
                 <span className="participant-status">
                   {currentUser?.designation || 'Guest'}
                 </span>
@@ -1199,7 +1732,12 @@ export default function VideoMeetScreen() {
                   )}
                 </div>
                 <div className="participant-info">
-                  <span className="participant-name">{participant.name}</span>
+                  <div className="participant-name-row">
+                    <span className="participant-name">{participant.name}</span>
+                    {roomSettings.hostPeerId === participant.peerId && (
+                      <span className="participant-chip">Host</span>
+                    )}
+                  </div>
                   {participant.designation && (
                     <span className="participant-status">{participant.designation}</span>
                   )}
@@ -1213,10 +1751,47 @@ export default function VideoMeetScreen() {
             ))}
           </div>
 
+          <div className="host-controls-section">
+            <h4>Host controls</h4>
+            {isHost ? (
+              <>
+                <div className="host-control-grid">
+                  <button
+                    className={`host-control-btn ${roomSettings.lockAudio ? 'active' : ''}`}
+                    onClick={() => updateRoomSettings({ lockAudio: !roomSettings.lockAudio })}
+                  >
+                    {roomSettings.lockAudio ? <Lock size={16} /> : <Unlock size={16} />}
+                    <span>{roomSettings.lockAudio ? 'Unlock microphones' : 'Lock microphones'}</span>
+                  </button>
+                  <button
+                    className={`host-control-btn ${roomSettings.lockVideo ? 'active' : ''}`}
+                    onClick={() => updateRoomSettings({ lockVideo: !roomSettings.lockVideo })}
+                  >
+                    {roomSettings.lockVideo ? <Lock size={16} /> : <Unlock size={16} />}
+                    <span>{roomSettings.lockVideo ? 'Unlock cameras' : 'Lock cameras'}</span>
+                  </button>
+                </div>
+                <p className="host-controls-note">Locks apply to everyone except the host.</p>
+              </>
+            ) : (
+              <p className="host-controls-note">
+                {roomSettings.lockAudio || roomSettings.lockVideo
+                  ? `Host has ${
+                      roomSettings.lockAudio && roomSettings.lockVideo
+                        ? 'locked microphones and cameras'
+                        : roomSettings.lockAudio
+                          ? 'locked microphones'
+                          : 'locked cameras'
+                    } for this call.`
+                  : 'Host controls are managed by the meeting host.'}
+              </p>
+            )}
+          </div>
+
           <div className="share-section">
             <h4>Share meeting info</h4>
             <div className="share-link-box">
-              <span>{roomId}</span>
+              <span>{shareableMeetingLink || roomId}</span>
               <button onClick={copyMeetingLink} title="Copy meeting link">
                 {copied ? <Check size={16} /> : <Copy size={16} />}
               </button>

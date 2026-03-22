@@ -20,10 +20,10 @@
   background: var(--charcoal);
   padding: 24px 16px 16px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   position: relative;
-  height: 80px;
+  min-height: 92px;
   border-bottom: 1px solid var(--gray-green-30);
 }
 
@@ -51,13 +51,36 @@
   border: 3px solid var(--white);
 }
 
-.designation-badge {
-  background: var(--white);
-  color: var(--charcoal);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
+.header-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.worktype-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  line-height: 1;
+}
+
+.worktype-badge.developer {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.worktype-badge.tester {
+  background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+}
+
+.worktype-badge.both {
+  background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
 }
 
 .card-content {
@@ -85,6 +108,14 @@
   gap: 8px;
   color: var(--gray-green);
   font-size: 12px;
+  min-width: 0;
+}
+
+.info-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .info-item svg {
@@ -95,13 +126,13 @@
 .task-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px; /* Increased gap */
-  padding: 16px; /* Increased padding */
+  gap: 10px;
+  padding: 14px;
   border-radius: var(--radius-small);
-  margin-bottom: 20px; /* Increased margin */
+  margin-bottom: 16px;
   background: var(--off-white);
   border: 1px solid var(--gray-green-30);
-  text-align: center; /* Center align text */
+  text-align: center;
 }
 
 .task-preview {
@@ -168,11 +199,16 @@
 }
 
 .stat .label {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--gray-green);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stat .value {

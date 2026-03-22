@@ -351,6 +351,7 @@
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.25s ease-in-out;
+  min-width: 350px;
 }
 
 /* Decorative blob */
@@ -596,6 +597,40 @@
   color: var(--gray-green);
 }
 
+.meeting-room-code {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gray-green);
+  font-weight: 600;
+}
+
+.meeting-status-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.meeting-status-pill.upcoming {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.meeting-status-pill.live {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.meeting-action-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .announcement-item small {
   color: var(--gray-green);
   font-size: 12px;
@@ -777,6 +812,10 @@
   color: var(--gray-green);
 }
 
+.message-actions {
+  margin-top: 12px;
+}
+
 .message-card .card-minutes {
   margin-top: 6px;
   font-style: italic;
@@ -950,7 +989,9 @@
   margin-bottom: 8px;
 }
 
-.meeting-form input {
+.meeting-form input[type='text'],
+.meeting-form input[type='date'],
+.meeting-form input[type='time'] {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--gray-green-30);
@@ -961,7 +1002,27 @@
   color: var(--charcoal);
 }
 
-.meeting-form input:focus {
+.meeting-form input[type='text']:focus,
+.meeting-form input[type='date']:focus,
+.meeting-form input[type='time']:focus {
+  outline: none;
+  border-color: var(--charcoal);
+  background: var(--white);
+}
+
+.meeting-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-green-30);
+  border-radius: var(--radius-small);
+  font-size: 14px;
+  font-family: var(--font-family);
+  background: var(--off-white);
+  color: var(--charcoal);
+  resize: vertical;
+}
+
+.meeting-form textarea:focus {
   outline: none;
   border-color: var(--charcoal);
   background: var(--white);
@@ -1014,6 +1075,28 @@
 .attendee-chip.selected .avatar {
   background: var(--vibrant-red);
   color: var(--white);
+}
+
+.meeting-share-options {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.share-option input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--vibrant-red);
 }
 
 .new-announcement-btn {
@@ -1090,6 +1173,12 @@
   transform: translateY(-1px);
 }
 
+.btn-secondary.compact {
+  padding: 8px 12px;
+  font-size: 12px;
+  gap: 6px;
+}
+
 .meeting-actions {
   display: flex;
   align-items: center;
@@ -1118,6 +1207,13 @@
 .announcement-card p {
   color: var(--gray-green);
   margin-bottom: 8px;
+}
+
+.announcement-message a,
+.announcement-card p a {
+  color: var(--vibrant-red);
+  text-decoration: underline;
+  font-weight: 700;
 }
 
 .announcement-card small {

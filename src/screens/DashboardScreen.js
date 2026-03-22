@@ -4,6 +4,13 @@ import { useDataStore } from '../store/dataStore';
 import EmployeeCard from '../components/EmployeeCard';
 import '../styles/Dashboard.css';
 import {
+  buildMeetingJoinLink,
+  extractUrlsFromText,
+  getMeetingRoomCode,
+  getMeetingStartsAt,
+  getMeetingTiming,
+} from '../lib/meetingUtils';
+import {
   LogOut,
   Users,
   CheckCircle,
@@ -14,6 +21,7 @@ import {
   Plus,
   Video,
   Megaphone,
+  Copy,
 } from 'lucide-react';
 
 export default function DashboardScreen() {
@@ -27,7 +35,12 @@ export default function DashboardScreen() {
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('');
   const [meetingAttendees, setMeetingAttendees] = useState([]);
+  const [shareMeetingToChat, setShareMeetingToChat] = useState(true);
+  const [shareMeetingToAnnouncements, setShareMeetingToAnnouncements] = useState(true);
+  const [meetingAnnouncementNote, setMeetingAnnouncementNote] = useState('');
   const [meetingError, setMeetingError] = useState('');
+  const [copiedMeetingKey, setCopiedMeetingKey] = useState('');
+  const [timeNow, setTimeNow] = useState(Date.now());
   const messagesEndRef = useRef(null);
 
   const currentUserId = useDataStore((state) => state.currentUserId);
@@ -76,6 +89,13 @@ export default function DashboardScreen() {
       messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
     }
   }, [activeTab, messages.length]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeNow(Date.now());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSearch = (e) => {
     const query = e.target.value;
@@ -129,11 +149,31 @@ export default function DashboardScreen() {
       return;
     }
 
-    addMeeting(meetingTitle, meetingDate, meetingTime, meetingAttendees);
+    const scheduledStart = new Date(`${meetingDate}T${meetingTime}`);
+    if (Number.isNaN(scheduledStart.getTime())) {
+      setMeetingError('Please choose a valid date and time');
+      return;
+    }
+
+    if (scheduledStart.getTime() < Date.now() - 60000) {
+      setMeetingError('Meeting time must be now or in the future');
+      return;
+    }
+
+    addMeeting(meetingTitle, meetingDate, meetingTime, meetingAttendees, {
+      shareToMessages: shareMeetingToChat,
+      shareToAnnouncements: canAnnounce() && shareMeetingToAnnouncements,
+      announcementTitle: `Meeting: ${meetingTitle.trim()}`,
+      announcementMessage: meetingAnnouncementNote.trim(),
+    });
+
     setMeetingTitle('');
     setMeetingDate('');
     setMeetingTime('');
     setMeetingAttendees([]);
+    setMeetingAnnouncementNote('');
+    setShareMeetingToChat(true);
+    setShareMeetingToAnnouncements(true);
   };
 
   const handleAnnouncement = () => {
@@ -174,15 +214,133 @@ export default function DashboardScreen() {
       });
     } else if (shareType === 'meeting') {
       meetings.forEach(meeting => {
+        const startsAt = getMeetingStartsAt(meeting);
+        const roomId = getMeetingRoomCode(meeting);
         items.push({
           id: meeting.id,
-          label: meeting.title,
-          payload: meeting
+          label: startsAt
+            ? `${meeting.title} (${new Date(startsAt).toLocaleString([], {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })})`
+            : meeting.title,
+          payload: {
+            ...meeting,
+            roomId,
+            startsAt,
+            joinLink: buildMeetingJoinLink({
+              ...meeting,
+              roomId,
+              startsAt,
+            }),
+          }
         });
       });
     }
     return items;
   }, [shareType, tasks, schedule, meetings]);
+
+  const sortedMeetings = useMemo(() => {
+    return [...meetings].sort((firstMeeting, secondMeeting) => {
+      const firstStartsAt = getMeetingStartsAt(firstMeeting);
+      const secondStartsAt = getMeetingStartsAt(secondMeeting);
+      const firstTime = firstStartsAt ? new Date(firstStartsAt).getTime() : 0;
+      const secondTime = secondStartsAt ? new Date(secondStartsAt).getTime() : 0;
+      return firstTime - secondTime;
+    });
+  }, [meetings]);
+
+  const getMeetingPath = useCallback((meetingLike) => {
+    const roomId = getMeetingRoomCode(meetingLike);
+    if (!roomId) {
+      return '';
+    }
+    const params = new URLSearchParams();
+    params.set('room', roomId);
+    const startsAt = getMeetingStartsAt(meetingLike);
+    if (startsAt) {
+      params.set('start', startsAt);
+    }
+    if (meetingLike?.id) {
+      params.set('meeting', meetingLike.id);
+    }
+    if (meetingLike?.title) {
+      params.set('title', meetingLike.title);
+    }
+    return `/video-meet?${params.toString()}`;
+  }, []);
+
+  const getMeetingDisplayMeta = useCallback(
+    (meetingLike) => {
+      const startsAt = getMeetingStartsAt(meetingLike);
+      const timing = getMeetingTiming(startsAt, timeNow);
+      const roomId = getMeetingRoomCode(meetingLike);
+      const joinLink = buildMeetingJoinLink({
+        ...meetingLike,
+        roomId,
+        startsAt,
+      });
+      return {
+        startsAt,
+        timing,
+        roomId,
+        joinLink,
+        scheduledLabel: startsAt
+          ? new Date(startsAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+          : `${meetingLike?.date || ''} ${meetingLike?.time || ''}`.trim(),
+      };
+    },
+    [timeNow]
+  );
+
+  const handleJoinMeeting = useCallback(
+    (meetingLike) => {
+      const path = getMeetingPath(meetingLike);
+      if (!path) {
+        return;
+      }
+      navigate(path);
+    },
+    [getMeetingPath, navigate]
+  );
+
+  const handleCopyMeetingLink = useCallback(async (meetingLike, copyKey) => {
+    const joinLink = buildMeetingJoinLink(meetingLike);
+    if (!joinLink) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(joinLink);
+      setCopiedMeetingKey(copyKey);
+      setTimeout(() => {
+        setCopiedMeetingKey((current) => (current === copyKey ? '' : current));
+      }, 1800);
+    } catch (error) {
+      alert('Unable to copy the meeting link.');
+    }
+  }, []);
+
+  const renderTextWithLinks = useCallback((text) => {
+    if (!text) {
+      return '';
+    }
+
+    const urls = extractUrlsFromText(text);
+    if (urls.length === 0) {
+      return text;
+    }
+
+    return text.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
+      if (/^https?:\/\//i.test(part)) {
+        return (
+          <a key={`url-${index}-${part}`} href={part} target="_blank" rel="noreferrer">
+            {part}
+          </a>
+        );
+      }
+      return <React.Fragment key={`text-${index}`}>{part}</React.Fragment>;
+    });
+  }, []);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -467,30 +625,45 @@ export default function DashboardScreen() {
               <div className="meetings-section">
                 <h3>Upcoming Meetings</h3>
                 <div className="meetings-list">
-                  {meetings.map((meeting) => (
-                    <div key={meeting.id} className="meeting-item">
-                      <div className="meeting-icon">
-                        <Calendar size={20} />
-                      </div>
-                      <div className="meeting-details">
-                        <h4>{meeting.title}</h4>
-                        <p>
-                          {meeting.date} at {meeting.time}
-                        </p>
-                        {meeting.minutes && (
-                          <p className="meeting-minutes">Minutes: {meeting.minutes.substring(0, 50)}...</p>
+                  {sortedMeetings.map((meeting) => {
+                    const meta = getMeetingDisplayMeta(meeting);
+                    return (
+                      <div key={meeting.id} className="meeting-item">
+                        <div className="meeting-icon">
+                          <Calendar size={20} />
+                        </div>
+                        <div className="meeting-details">
+                          <h4>{meeting.title}</h4>
+                          <p>{meta.scheduledLabel}</p>
+                          {meta.roomId && <p className="meeting-room-code">Room code: {meta.roomId}</p>}
+                          {meta.timing.label && (
+                            <div className={`meeting-status-pill ${meta.timing.status}`}>
+                              {meta.timing.label}
+                            </div>
+                          )}
+                          {meeting.minutes && (
+                            <p className="meeting-minutes">Minutes: {meeting.minutes.substring(0, 50)}...</p>
+                          )}
+                          <div className="meeting-action-row">
+                            <button className="btn-secondary compact" onClick={() => handleJoinMeeting(meeting)}>
+                              Join
+                            </button>
+                            <button
+                              className="btn-secondary compact"
+                              onClick={() => handleCopyMeetingLink(meeting, meeting.id)}
+                            >
+                              {copiedMeetingKey === meeting.id ? 'Copied' : 'Copy link'}
+                            </button>
+                          </div>
+                        </div>
+                        {canManageData() && (
+                          <button className="delete-btn" onClick={() => deleteMeeting(meeting.id)}>
+                            Delete
+                          </button>
                         )}
                       </div>
-                      {canManageData() && (
-                        <button
-                          className="delete-btn"
-                          onClick={() => deleteMeeting(meeting.id)}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -519,7 +692,7 @@ export default function DashboardScreen() {
                             </button>
                           )}
                         </div>
-                        <p className="announcement-message">{ann.message}</p>
+                        <p className="announcement-message">{renderTextWithLinks(ann.message)}</p>
                         <small className="announcement-timestamp">
                           {new Date(ann.timestamp || ann.created_at).toLocaleString()}
                         </small>
@@ -623,6 +796,10 @@ export default function DashboardScreen() {
                   <div className="messages-display" ref={messagesEndRef}>
                     {visibleMessages.map((msg) => {
                       const sender = getUser(msg.fromId);
+                      const meetingMeta =
+                        msg.type === 'meeting' && msg.payload
+                          ? getMeetingDisplayMeta(msg.payload)
+                          : null;
                       return (
                         <div
                           key={msg.id}
@@ -663,12 +840,45 @@ export default function DashboardScreen() {
                               <div className="card-content">
                                 <h4>{msg.payload?.title}</h4>
                                 <div className="card-meta">
-                                  <span>Date: {msg.payload?.date}</span>
-                                  <span>Time: {msg.payload?.time}</span>
+                                  <span>
+                                    Scheduled:{' '}
+                                    {meetingMeta?.scheduledLabel || `${msg.payload?.date || ''} ${msg.payload?.time || ''}`}
+                                  </span>
+                                  {meetingMeta?.roomId && <span>Room: {meetingMeta.roomId}</span>}
+                                  {meetingMeta?.timing?.label && <span>{meetingMeta.timing.label}</span>}
                                 </div>
                                 {msg.payload?.minutes && (
                                   <p className="card-minutes">Minutes: {msg.payload?.minutes}</p>
                                 )}
+                                <div className="meeting-action-row message-actions">
+                                  <button
+                                    className="btn-secondary compact"
+                                    onClick={() => handleJoinMeeting(msg.payload)}
+                                  >
+                                    Join
+                                  </button>
+                                  <button
+                                    className="btn-secondary compact"
+                                    onClick={() =>
+                                      handleCopyMeetingLink(
+                                        {
+                                          ...msg.payload,
+                                          joinLink: meetingMeta?.joinLink || msg.payload?.joinLink,
+                                        },
+                                        `message_${msg.id}`
+                                      )
+                                    }
+                                  >
+                                    {copiedMeetingKey === `message_${msg.id}` ? (
+                                      'Copied'
+                                    ) : (
+                                      <>
+                                        <Copy size={14} />
+                                        Copy link
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -786,10 +996,43 @@ export default function DashboardScreen() {
                       </div>
                     </div>
 
+                    <div className="meeting-share-options">
+                      <label className="share-option">
+                        <input
+                          type="checkbox"
+                          checked={shareMeetingToChat}
+                          onChange={(event) => setShareMeetingToChat(event.target.checked)}
+                        />
+                        <span>Share this meeting in team messages</span>
+                      </label>
+                      {canAnnounce() && (
+                        <label className="share-option">
+                          <input
+                            type="checkbox"
+                            checked={shareMeetingToAnnouncements}
+                            onChange={(event) => setShareMeetingToAnnouncements(event.target.checked)}
+                          />
+                          <span>Post this meeting in announcements</span>
+                        </label>
+                      )}
+                    </div>
+
+                    {canAnnounce() && shareMeetingToAnnouncements && (
+                      <div className="form-group">
+                        <label>Announcement note (optional)</label>
+                        <textarea
+                          value={meetingAnnouncementNote}
+                          onChange={(event) => setMeetingAnnouncementNote(event.target.value)}
+                          placeholder="Example: Please join 5 minutes early for updates."
+                          rows={3}
+                        />
+                      </div>
+                    )}
+
                     {meetingError && <div className="error-message">{meetingError}</div>}
 
                     <button className="btn-primary" onClick={handleCreateMeeting}>
-                      Create Meeting
+                      Create and Share Meeting
                     </button>
                   </div>
                 ) : (
@@ -810,7 +1053,7 @@ export default function DashboardScreen() {
                 {announcements.map((announcement) => (
                   <div key={announcement.id} className="announcement-card">
                     <h4>{announcement.title}</h4>
-                    <p>{announcement.message}</p>
+                    <p>{renderTextWithLinks(announcement.message)}</p>
                     <small>{new Date(announcement.timestamp).toLocaleString()}</small>
                     {canManageData() && (
                       <button

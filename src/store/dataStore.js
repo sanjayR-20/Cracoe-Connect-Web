@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabaseClient';
+import {
+  buildMeetingJoinLink,
+  generateMeetingRoomCode,
+  getMeetingRoomCode,
+  getMeetingStartsAt,
+} from '../lib/meetingUtils';
+import { extractWorkType, normalizeWorkType } from '../lib/workTypeUtils';
 
 // Notification helper for web
 const sendNotification = (title, message) => {
@@ -44,57 +51,82 @@ const isSupabaseConfigured = () => {
   return Boolean(url && key);
 };
 
-const serializeUser = (user) => ({
-  id: user.id,
-  username: user.username,
-  password: user.password,
-  name: user.name,
-  designation: user.designation,
-  email: user.email,
-  permissions: user.permissions,
-  points: user.points || 0,
-  profile_completed: user.profileCompleted || false,
-  profile_photo: user.profilePhoto || null,
-  location: user.location || null,
-  gender: user.gender || null,
-  nationality: user.nationality || null,
-  known_languages: user.knownLanguages || [],
-  short_bio: user.shortBio || null,
-  education: user.education || null,
-  phone: user.phone || null,
-  github: user.github || null,
-  linkedin: user.linkedin || null,
-  skills: user.skills || [],
-  projects_done: user.projectsDone || [],
-  interests: user.interests || [],
-  experience: user.experience || null,
-});
+const isSharveshControlUser = (user) => {
+  if (!user) {
+    return false;
+  }
+  const username = String(user.username || '').trim().toLowerCase();
+  const name = String(user.name || '').trim().toLowerCase();
+  return user.designation === 'CEO' || username === 'sharvesh' || name === 'sharvesh s';
+};
 
-const deserializeUser = (row) => ({
-  id: row.id,
-  username: row.username,
-  password: row.password,
-  name: row.name,
-  designation: row.designation,
-  email: row.email,
-  permissions: row.permissions,
-  points: row.points || 0,
-  profileCompleted: row.profile_completed || false,
-  profilePhoto: row.profile_photo || null,
-  location: row.location || null,
-  gender: row.gender || null,
-  nationality: row.nationality || null,
-  knownLanguages: row.known_languages || [],
-  shortBio: row.short_bio || null,
-  education: row.education || null,
-  phone: row.phone || null,
-  github: row.github || null,
-  linkedin: row.linkedin || null,
-  skills: row.skills || [],
-  projectsDone: row.projects_done || [],
-  interests: row.interests || [],
-  experience: row.experience || null,
-});
+const normalizeUserPermissions = (permissions = {}, fallbackWorkType = 'both') => {
+  return {
+    ...(permissions || {}),
+    workType: normalizeWorkType(permissions?.workType || permissions?.work_type || fallbackWorkType),
+  };
+};
+
+const serializeUser = (user) => {
+  const normalizedWorkType = extractWorkType(user);
+  return {
+    id: user.id,
+    username: user.username,
+    password: user.password,
+    name: user.name,
+    designation: user.designation,
+    email: user.email,
+    permissions: normalizeUserPermissions(user.permissions, normalizedWorkType),
+    points: user.points || 0,
+    profile_completed: user.profileCompleted || false,
+    profile_photo: user.profilePhoto || null,
+    location: user.location || null,
+    gender: user.gender || null,
+    nationality: user.nationality || null,
+    known_languages: user.knownLanguages || [],
+    short_bio: user.shortBio || null,
+    education: user.education || null,
+    phone: user.phone || null,
+    github: user.github || null,
+    linkedin: user.linkedin || null,
+    skills: user.skills || [],
+    projects_done: user.projectsDone || [],
+    interests: user.interests || [],
+    experience: user.experience || null,
+  };
+};
+
+const deserializeUser = (row) => {
+  const workType = normalizeWorkType(
+    row?.permissions?.workType || row?.permissions?.work_type || row?.work_type || 'both'
+  );
+  return {
+    id: row.id,
+    username: row.username,
+    password: row.password,
+    name: row.name,
+    designation: row.designation,
+    email: row.email,
+    permissions: normalizeUserPermissions(row.permissions, workType),
+    workType,
+    points: row.points || 0,
+    profileCompleted: row.profile_completed || false,
+    profilePhoto: row.profile_photo || null,
+    location: row.location || null,
+    gender: row.gender || null,
+    nationality: row.nationality || null,
+    knownLanguages: row.known_languages || [],
+    shortBio: row.short_bio || null,
+    education: row.education || null,
+    phone: row.phone || null,
+    github: row.github || null,
+    linkedin: row.linkedin || null,
+    skills: row.skills || [],
+    projectsDone: row.projects_done || [],
+    interests: row.interests || [],
+    experience: row.experience || null,
+  };
+};
 
 // Points based on task difficulty
 const DIFFICULTY_POINTS = {
@@ -192,6 +224,35 @@ const deserializeMeeting = (row) => ({
   attendees: row.attendees || [],
   minutes: row.minutes || '',
 });
+
+const formatMeetingScheduleText = (meeting) => {
+  const startsAt = getMeetingStartsAt(meeting);
+  if (!startsAt) {
+    const date = meeting?.date || '';
+    const time = meeting?.time || '';
+    return `${date} ${time}`.trim();
+  }
+
+  return new Date(startsAt).toLocaleString([], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
+
+const buildMeetingSharePayload = (meeting) => {
+  const roomId = getMeetingRoomCode(meeting);
+  const startsAt = getMeetingStartsAt(meeting);
+  return {
+    ...meeting,
+    roomId,
+    startsAt,
+    joinLink: buildMeetingJoinLink({
+      ...meeting,
+      roomId,
+      startsAt,
+    }),
+  };
+};
 
 export const useDataStore = create((set, get) => ({
   currentUserId: localStorage.getItem('currentUserId') || null,
@@ -436,46 +497,70 @@ export const useDataStore = create((set, get) => ({
   // Permissions
   canManageTasks: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canAssignTasks ?? false;
   },
 
   canViewAdmin: () => {
     const user = get().getCurrentUser();
-    return user?.designation === 'CEO';
+    return isSharveshControlUser(user) || user?.designation === 'CTO';
   },
 
   canViewAllTasks: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canViewAllTasks ?? false;
   },
 
   canEditAllTasks: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canEditAllTasks ?? false;
   },
 
   canAnnounce: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canAnnounce ?? false;
   },
 
   canSchedule: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canSchedule ?? false;
   },
 
   canViewMeetingMinutes: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canViewMeetingMinutes ?? false;
   },
 
   canManageMeetingMinutes: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     return user?.permissions?.canManageMeetingMinutes ?? false;
   },
 
   canManageData: () => {
     const user = get().getCurrentUser();
+    if (isSharveshControlUser(user)) {
+      return true;
+    }
     const role = user?.designation;
     return ['CEO', 'COO', 'CTO', 'CFO', 'Manager'].includes(role);
   },
@@ -791,11 +876,16 @@ export const useDataStore = create((set, get) => ({
   },
 
   sendSharedMessage: (type, payload) => {
+    const normalizedPayload =
+      type === 'meeting' && payload
+        ? buildMeetingSharePayload(payload)
+        : payload;
+
     const newMessage = {
       id: `message_${Date.now()}`,
       fromId: get().currentUserId,
       type,
-      payload,
+      payload: normalizedPayload,
       timestamp: new Date().toISOString(),
     };
     set((state) => ({
@@ -825,15 +915,27 @@ export const useDataStore = create((set, get) => ({
   },
 
   // Meetings
-  addMeeting: (title, date, time, attendees) => {
+  addMeeting: (title, date, time, attendees, options = {}) => {
+    const roomId = generateMeetingRoomCode();
+    const currentUserId = get().currentUserId;
+    const normalizedAttendees = Array.from(
+      new Set([...(Array.isArray(attendees) ? attendees : []), currentUserId].filter(Boolean))
+    );
+
     const newMeeting = {
-      id: `meeting_${Date.now()}`,
-      title,
+      id: `meeting_${Date.now()}_${roomId}`,
+      title: title.trim(),
       date,
       time,
-      attendees,
+      attendees: normalizedAttendees,
       minutes: '',
+      roomId,
+      hostId: currentUserId,
+      startsAt: getMeetingStartsAt({ date, time }),
     };
+
+    const meetingPayload = buildMeetingSharePayload(newMeeting);
+
     set((state) => ({
       meetings: [...state.meetings, newMeeting],
     }));
@@ -844,6 +946,35 @@ export const useDataStore = create((set, get) => ({
         .insert(serializeMeeting(newMeeting))
         .then(({ error }) => error && set({ supabaseError: error.message }));
     }
+
+    const {
+      shareToMessages = false,
+      shareToAnnouncements = false,
+      announcementTitle = '',
+      announcementMessage = '',
+    } = options || {};
+
+    if (shareToMessages) {
+      get().sendSharedMessage('meeting', meetingPayload);
+    }
+
+    if (shareToAnnouncements) {
+      const fallbackMessage = `${meetingPayload.title} is scheduled for ${formatMeetingScheduleText(
+        meetingPayload
+      )}. Join link: ${meetingPayload.joinLink}`;
+      const hasJoinLink = typeof announcementMessage === 'string' && /https?:\/\/\S+/i.test(announcementMessage);
+      const normalizedAnnouncementMessage = announcementMessage
+        ? hasJoinLink
+          ? announcementMessage
+          : `${announcementMessage}\nJoin link: ${meetingPayload.joinLink}`
+        : fallbackMessage;
+      get().addAnnouncement(
+        announcementTitle || `Meeting: ${meetingPayload.title}`,
+        normalizedAnnouncementMessage
+      );
+    }
+
+    return meetingPayload;
   },
 
   deleteMeeting: (meetingId) => {
@@ -960,7 +1091,10 @@ export const useDataStore = create((set, get) => ({
         user.id === userId
           ? {
               ...user,
-              permissions: { ...user.permissions, [permission]: value },
+              permissions: normalizeUserPermissions(
+                { ...user.permissions, [permission]: value },
+                extractWorkType(user)
+              ),
             }
           : user
       ),
@@ -979,16 +1113,110 @@ export const useDataStore = create((set, get) => ({
   },
 
   addUser: (user) => {
+    const normalizedWorkType = extractWorkType(user);
+    const normalizedUser = {
+      ...user,
+      workType: normalizedWorkType,
+      permissions: normalizeUserPermissions(user.permissions, normalizedWorkType),
+    };
+
     set((state) => ({
-      users: [...state.users, user],
+      users: [...state.users, normalizedUser],
     }));
 
     if (isSupabaseConfigured()) {
       supabase
         .from('users')
-        .insert(serializeUser(user))
+        .insert(serializeUser(normalizedUser))
         .then(({ error }) => error && set({ supabaseError: error.message }));
     }
+  },
+
+  updateUserWorkType: async (userId, workType) => {
+    const normalizedWorkType = normalizeWorkType(workType);
+
+    set((state) => ({
+      users: state.users.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              workType: normalizedWorkType,
+              permissions: normalizeUserPermissions(
+                { ...user.permissions, workType: normalizedWorkType },
+                normalizedWorkType
+              ),
+            }
+          : user
+      ),
+    }));
+
+    if (isSupabaseConfigured()) {
+      const user = get().users.find((entry) => entry.id === userId);
+      if (user) {
+        const nextPermissions = normalizeUserPermissions(
+          { ...user.permissions, workType: normalizedWorkType },
+          normalizedWorkType
+        );
+        const { error } = await supabase
+          .from('users')
+          .update({ permissions: nextPermissions })
+          .eq('id', userId);
+        if (error) {
+          set({ supabaseError: error.message });
+          throw error;
+        }
+      }
+    }
+
+    return normalizedWorkType;
+  },
+
+  updateUserByAdmin: async (userId, updates) => {
+    const currentUser = get().getCurrentUser();
+    if (!isSharveshControlUser(currentUser)) {
+      throw new Error('Only Sharvesh (CEO) can edit user profiles here.');
+    }
+
+    const existingUser = get().users.find((user) => user.id === userId);
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    const nextWorkType = normalizeWorkType(updates.workType || extractWorkType(existingUser));
+    const mergedPermissions = normalizeUserPermissions(
+      { ...existingUser.permissions, ...(updates.permissions || {}), workType: nextWorkType },
+      nextWorkType
+    );
+    const mergedUser = {
+      ...existingUser,
+      ...updates,
+      workType: nextWorkType,
+      permissions: mergedPermissions,
+    };
+
+    set((state) => ({
+      users: state.users.map((user) => (user.id === userId ? mergedUser : user)),
+    }));
+
+    if (isSupabaseConfigured()) {
+      const payload = {
+        name: mergedUser.name,
+        email: mergedUser.email,
+        designation: mergedUser.designation,
+        phone: mergedUser.phone || null,
+        location: mergedUser.location || null,
+        short_bio: mergedUser.shortBio || null,
+        profile_photo: mergedUser.profilePhoto || null,
+        permissions: mergedPermissions,
+      };
+      const { error } = await supabase.from('users').update(payload).eq('id', userId);
+      if (error) {
+        set({ supabaseError: error.message });
+        throw error;
+      }
+    }
+
+    return mergedUser;
   },
 
   updateUserProfile: async (userId, profileData) => {
@@ -1121,7 +1349,7 @@ export const useDataStore = create((set, get) => ({
   // Admin function to update user points (CEO and CTO can adjust)
   updateUserPoints: async (userId, pointsChange) => {
     const currentUser = get().getCurrentUser();
-    if (!['CEO', 'CTO'].includes(currentUser?.designation)) {
+    if (!isSharveshControlUser(currentUser) && !['CEO', 'CTO'].includes(currentUser?.designation)) {
       throw new Error('Only CEO and CTO can adjust points');
     }
 

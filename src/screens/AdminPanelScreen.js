@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/AdminPanel.css';
 import { ArrowLeft, Lock, Unlock, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
+import { extractWorkType, getWorkTypeLabel, WORK_TYPE_OPTIONS } from '../lib/workTypeUtils';
 
 export default function AdminPanelScreen() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function AdminPanelScreen() {
   const addUser = useDataStore((state) => state.addUser);
   const removeUser = useDataStore((state) => state.removeUser);
   const updateUserPoints = useDataStore((state) => state.updateUserPoints);
+  const updateUserWorkType = useDataStore((state) => state.updateUserWorkType);
 
   const defaultPermissions = {
     canAssignTasks: false,
@@ -31,6 +33,7 @@ export default function AdminPanelScreen() {
     username: '',
     password: '',
     designation: 'Developer',
+    workType: 'both',
     email: '',
     permissions: { ...defaultPermissions },
   });
@@ -38,7 +41,11 @@ export default function AdminPanelScreen() {
   const [showPermissions, setShowPermissions] = useState(false);
 
   const currentUser = getCurrentUser();
-  const isCEO = currentUser?.designation === 'CEO';
+  const isSharvesh =
+    currentUser?.designation === 'CEO' ||
+    currentUser?.username?.toLowerCase() === 'sharvesh' ||
+    currentUser?.name === 'Sharvesh S';
+  const isCEO = currentUser?.designation === 'CEO' || isSharvesh;
   const isCTO = currentUser?.designation === 'CTO';
   const hasAccess = isCEO || isCTO;
 
@@ -95,8 +102,9 @@ export default function AdminPanelScreen() {
       username: newUser.username.trim().toLowerCase(),
       password: newUser.password.trim(),
       designation: newUser.designation,
+      workType: newUser.workType,
       email: newUser.email.trim(),
-      permissions: newUser.permissions,
+      permissions: { ...newUser.permissions, workType: newUser.workType },
       profileCompleted: false,
       points: 0,
     };
@@ -107,6 +115,7 @@ export default function AdminPanelScreen() {
       username: '', 
       password: '', 
       designation: 'Developer', 
+      workType: 'both',
       email: '',
       permissions: { ...defaultPermissions },
     });
@@ -174,6 +183,16 @@ export default function AdminPanelScreen() {
                 <option>Marketing Lead</option>
                 <option>Developer</option>
                 <option>Tester</option>
+              </select>
+              <select
+                value={newUser.workType}
+                onChange={(e) => setNewUser({ ...newUser, workType: e.target.value })}
+              >
+                {WORK_TYPE_OPTIONS.map((type) => (
+                  <option key={`new-${type}`} value={type}>
+                    {getWorkTypeLabel(type)}
+                  </option>
+                ))}
               </select>
 
               {/* Permission Selection Section */}
@@ -243,6 +262,30 @@ export default function AdminPanelScreen() {
                   <div className="user-name-role">
                     <h3>{user.name}</h3>
                     <p>{user.designation}</p>
+                    <span className={`work-type-chip ${extractWorkType(user)}`}>
+                      {getWorkTypeLabel(extractWorkType(user))}
+                    </span>
+                  </div>
+                  <div className="user-card-right">
+                    {isCEO && (
+                      <select
+                        className="work-type-select"
+                        value={extractWorkType(user)}
+                        onChange={(event) => updateUserWorkType(user.id, event.target.value)}
+                      >
+                        {WORK_TYPE_OPTIONS.map((type) => (
+                          <option key={`${user.id}-${type}`} value={type}>
+                            {getWorkTypeLabel(type)}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      className="view-profile-btn"
+                      onClick={() => navigate(`/employee/${user.id}`)}
+                    >
+                      View Profile
+                    </button>
                   </div>
                   {isCEO && user.designation !== 'CEO' && (
                     <button
