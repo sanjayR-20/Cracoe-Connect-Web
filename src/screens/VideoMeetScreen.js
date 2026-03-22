@@ -71,10 +71,55 @@ const buildIceServers = () => {
 
 const ICE_SERVERS = buildIceServers();
 
+const isLocalHost = (host = '') => {
+  const normalized = String(host || '').toLowerCase();
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+};
+
+const normalizeSignalingUrl = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  try {
+    const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    const parsed = new URL(raw, baseOrigin);
+    const currentProtocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+
+    if (
+      typeof window !== 'undefined' &&
+      !isLocalHost(currentHost) &&
+      isLocalHost(parsed.hostname)
+    ) {
+      parsed.hostname = currentHost;
+      parsed.port = '';
+      parsed.protocol = currentProtocol === 'https:' ? 'wss:' : 'ws:';
+    }
+
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      parsed.protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+    }
+
+    if (currentProtocol === 'https:' && parsed.protocol === 'ws:' && !isLocalHost(parsed.hostname)) {
+      parsed.protocol = 'wss:';
+    }
+
+    if (!parsed.pathname || parsed.pathname === '/') {
+      parsed.pathname = '/ws';
+    }
+
+    return parsed.toString();
+  } catch (error) {
+    return raw;
+  }
+};
+
 const getSignalingUrl = () => {
   const explicit = process.env.REACT_APP_SIGNALING_URL || process.env.NEXT_PUBLIC_SIGNALING_URL;
   if (explicit) {
-    return explicit;
+    return normalizeSignalingUrl(explicit);
   }
 
   if (typeof window !== 'undefined') {
@@ -496,10 +541,11 @@ export default function VideoMeetScreen() {
     manualLeaveRef.current = false;
 
     let socket;
+    const signalingUrl = getSignalingUrl();
     try {
-      socket = new WebSocket(getSignalingUrl());
+      socket = new WebSocket(signalingUrl);
     } catch (err) {
-      setError('Failed to initialize meeting connection.');
+      setError(`Failed to initialize meeting connection. Check signaling URL: ${signalingUrl}`);
       setConnectionStatus('error');
       return;
     }

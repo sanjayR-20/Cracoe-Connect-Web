@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/ProfileScreen.css';
@@ -19,6 +19,7 @@ const ProfileScreen = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const photoInputRef = useRef(null);
 
   if (!currentUser) {
     return (
@@ -37,6 +38,7 @@ const ProfileScreen = () => {
     setEditData({
       name: currentUser.name || '',
       email: currentUser.email || '',
+      profilePhoto: currentUser.profilePhoto || '',
       phone: currentUser.phone || '',
       location: currentUser.location || '',
       shortBio: currentUser.shortBio || '',
@@ -49,6 +51,37 @@ const ProfileScreen = () => {
     });
     setIsEditing(true);
     setError('');
+  };
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose a valid image file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image must be 2MB or smaller.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditData((prev) => ({
+        ...prev,
+        profilePhoto: String(reader.result || ''),
+      }));
+      setError('');
+    };
+    reader.onerror = () => {
+      setError('Failed to read image file.');
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   const handleSave = async () => {
@@ -206,6 +239,47 @@ const ProfileScreen = () => {
               <h2>Basic Information</h2>
             </div>
             <div className="detail-grid">
+              <div className="detail-item full-width">
+                <label>Profile Photo</label>
+                {isEditing ? (
+                  <div className="photo-edit-row">
+                    <div className="photo-edit-preview">
+                      {editData.profilePhoto ? (
+                        <img src={editData.profilePhoto} alt="Profile preview" />
+                      ) : (
+                        <div className="photo-preview-placeholder">
+                          {getInitials(editData.name || currentUser.name)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="photo-edit-controls">
+                      <input
+                        type="url"
+                        className="edit-input"
+                        value={editData.profilePhoto || ''}
+                        onChange={(e) => setEditData({ ...editData, profilePhoto: e.target.value })}
+                        placeholder="Paste image URL or upload below"
+                      />
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-upload-photo"
+                        onClick={() => photoInputRef.current?.click()}
+                      >
+                        Upload Photo
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <span>{currentUser.profilePhoto ? 'Photo added' : 'No photo uploaded'}</span>
+                )}
+              </div>
               <div className="detail-item">
                 <label>Full Name</label>
                 {isEditing ? (
