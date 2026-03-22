@@ -37,7 +37,6 @@ services:
   - type: web
     name: cracoe-connect-web
     runtime: static
-    plan: free
     buildCommand: npm ci && npm run build
     staticPublishPath: build
     autoDeploy: true

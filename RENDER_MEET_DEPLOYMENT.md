@@ -25,6 +25,7 @@ git push -u origin codex/render-meet-deploy
 3. Connect GitHub and choose repo: `sanjayR-20/Cracoe-Connect-Web`
 4. Select branch: `codex/render-meet-deploy`
 5. Render auto-detects `render.yaml` and creates 2 services.
+6. Keep the static frontend service without a `plan` field in Blueprint (Render rejects `plan: free` for static runtime).
 
 ## 3) Fill environment variables when prompted
 
