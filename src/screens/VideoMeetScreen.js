@@ -159,6 +159,10 @@ export default function VideoMeetScreen() {
   const meetingIdFromUrl = params.get('meeting') || '';
 
   const currentUser = useDataStore((state) => state.getCurrentUser());
+  const currentUserDisplayName =
+    (currentUser?.name || currentUser?.username || currentUser?.email?.split('@')[0] || 'Guest').trim() || 'Guest';
+  const currentUserDesignation = currentUser?.designation || '';
+  const currentUserProfilePhoto = currentUser?.profilePhoto || currentUser?.profilePic || '';
 
   // State
   const [view, setView] = useState(roomFromUrl ? 'preview' : 'home'); // home, preview, meeting
@@ -419,9 +423,9 @@ export default function VideoMeetScreen() {
         sendSignalEvent(
           'offer',
           {
-            fromName: currentUser?.name || 'Guest',
-            fromDesignation: currentUser?.designation || '',
-            fromProfilePic: currentUser?.profilePic || '',
+            fromName: currentUserDisplayName,
+            fromDesignation: currentUserDesignation,
+            fromProfilePic: currentUserProfilePhoto,
             sdp: offer,
           },
           fromPeerId
@@ -438,9 +442,9 @@ export default function VideoMeetScreen() {
         sendSignalEvent(
           'answer',
           {
-            fromName: currentUser?.name || 'Guest',
-            fromDesignation: currentUser?.designation || '',
-            fromProfilePic: currentUser?.profilePic || '',
+            fromName: currentUserDisplayName,
+            fromDesignation: currentUserDesignation,
+            fromProfilePic: currentUserProfilePhoto,
             sdp: answer,
           },
           fromPeerId
@@ -505,7 +509,14 @@ export default function VideoMeetScreen() {
       default:
         break;
     }
-  }, [createPeerConnection, removePeer, currentUser, sendSignalEvent]);
+  }, [
+    createPeerConnection,
+    removePeer,
+    sendSignalEvent,
+    currentUserDisplayName,
+    currentUserDesignation,
+    currentUserProfilePhoto,
+  ]);
 
   // Join meeting room
   const joinRoom = useCallback(async (meetingRoomId) => {
@@ -561,9 +572,9 @@ export default function VideoMeetScreen() {
           roomId: normalizedRoomId,
           peerId: peerIdRef.current,
           state: {
-            name: currentUser?.name || 'Guest',
-            designation: currentUser?.designation || '',
-            profilePic: currentUser?.profilePic || '',
+            name: currentUserDisplayName,
+            designation: currentUserDesignation,
+            profilePic: currentUserProfilePhoto,
             audioEnabled,
             videoEnabled,
             handRaised,
@@ -752,7 +763,9 @@ export default function VideoMeetScreen() {
     };
   }, [
     handleSignalingMessage,
-    currentUser,
+    currentUserDisplayName,
+    currentUserDesignation,
+    currentUserProfilePhoto,
     audioEnabled,
     videoEnabled,
     handRaised,
@@ -833,9 +846,9 @@ export default function VideoMeetScreen() {
           roomId: roomIdRef.current,
           peerId: peerIdRef.current,
           state: {
-            name: currentUser?.name || 'Guest',
-            designation: currentUser?.designation || '',
-            profilePic: currentUser?.profilePic || '',
+            name: currentUserDisplayName,
+            designation: currentUserDesignation,
+            profilePic: currentUserProfilePhoto,
             audioEnabled: audio,
             videoEnabled: video,
             handRaised: typeof overrides.handRaised === 'boolean' ? overrides.handRaised : handRaised,
@@ -845,7 +858,7 @@ export default function VideoMeetScreen() {
         })
       );
     }
-  }, [currentUser, handRaised, screenSharing]);
+  }, [currentUserDisplayName, currentUserDesignation, currentUserProfilePhoto, handRaised, screenSharing]);
 
   // Toggle audio
   const toggleAudio = useCallback(() => {
@@ -972,7 +985,7 @@ export default function VideoMeetScreen() {
 
     const messageData = {
       fromPeerId: peerIdRef.current,
-      fromName: currentUser?.name || 'Guest',
+      fromName: currentUserDisplayName,
       message: newMessage.trim(),
     };
 
@@ -987,7 +1000,7 @@ export default function VideoMeetScreen() {
     sendSignalEvent('chat', messageData);
 
     setNewMessage('');
-  }, [newMessage, currentUser, sendSignalEvent]);
+  }, [newMessage, currentUserDisplayName, sendSignalEvent]);
 
   const isHost = roomSettings.hostPeerId === peerIdRef.current;
 
@@ -1283,10 +1296,10 @@ export default function VideoMeetScreen() {
             {!videoEnabled && (
               <div className="video-placeholder">
                 <div className="avatar-large">
-                  {currentUser?.profilePic ? (
-                    <img src={currentUser.profilePic} alt={currentUser.name} />
+                  {currentUserProfilePhoto ? (
+                    <img src={currentUserProfilePhoto} alt={currentUserDisplayName} />
                   ) : (
-                    getInitials(currentUser?.name)
+                    getInitials(currentUserDisplayName)
                   )}
                 </div>
               </div>
@@ -1311,7 +1324,7 @@ export default function VideoMeetScreen() {
           </div>
 
           <div className="preview-info">
-            <h2>{currentUser?.name || 'Guest'}</h2>
+            <h2>{currentUserDisplayName}</h2>
             {linkMeetingTitle && <p className="scheduled-title">{linkMeetingTitle}</p>}
             <p className="meeting-code">Meeting code: <strong>{roomId}</strong></p>
             {meetingTiming.startIso && (
@@ -1353,13 +1366,13 @@ export default function VideoMeetScreen() {
   const allParticipants = [
     { 
       peerId: 'local', 
-      name: currentUser?.name || 'You', 
+      name: currentUserDisplayName, 
       isLocal: true,
       audioEnabled,
       videoEnabled,
       handRaised,
-      profilePic: currentUser?.profilePic,
-      designation: currentUser?.designation,
+      profilePic: currentUserProfilePhoto,
+      designation: currentUserDesignation,
     },
     ...participants
   ];
@@ -1388,10 +1401,10 @@ export default function VideoMeetScreen() {
                     {!videoEnabled && !screenSharing && (
                       <div className="video-placeholder">
                         <div className="avatar-xlarge">
-                          {currentUser?.profilePic ? (
-                            <img src={currentUser.profilePic} alt={currentUser.name} />
+                          {currentUserProfilePhoto ? (
+                            <img src={currentUserProfilePhoto} alt={currentUserDisplayName} />
                           ) : (
-                            getInitials(currentUser?.name)
+                            getInitials(currentUserDisplayName)
                           )}
                         </div>
                       </div>
@@ -1458,10 +1471,10 @@ export default function VideoMeetScreen() {
                         {!videoEnabled && !screenSharing && (
                           <div className="video-placeholder">
                             <div className="avatar-small">
-                              {currentUser?.profilePic ? (
-                                <img src={currentUser.profilePic} alt={currentUser.name} />
+                              {currentUserProfilePhoto ? (
+                                <img src={currentUserProfilePhoto} alt={currentUserDisplayName} />
                               ) : (
-                                getInitials(currentUser?.name)
+                                getInitials(currentUserDisplayName)
                               )}
                             </div>
                           </div>
@@ -1517,16 +1530,16 @@ export default function VideoMeetScreen() {
                 {!videoEnabled && !screenSharing && (
                   <div className="video-placeholder">
                     <div className="avatar-medium">
-                      {currentUser?.profilePic ? (
-                        <img src={currentUser.profilePic} alt={currentUser.name} />
+                      {currentUserProfilePhoto ? (
+                        <img src={currentUserProfilePhoto} alt={currentUserDisplayName} />
                       ) : (
-                        getInitials(currentUser?.name)
+                        getInitials(currentUserDisplayName)
                       )}
                     </div>
                   </div>
                 )}
                 <div className="tile-info">
-                  <span className="tile-name">{currentUser?.name || 'You'} (You)</span>
+                  <span className="tile-name">{currentUserDisplayName} (You)</span>
                   {isHost && <span className="tile-chip">Host</span>}
                   {!audioEnabled && <MicOff size={16} />}
                   {handRaised && <Hand size={16} className="hand-icon" />}
@@ -1747,19 +1760,19 @@ export default function VideoMeetScreen() {
             {/* Local user */}
             <div className="participant-item">
               <div className="participant-avatar">
-                {currentUser?.profilePic ? (
-                  <img src={currentUser.profilePic} alt={currentUser.name} />
+                {currentUserProfilePhoto ? (
+                  <img src={currentUserProfilePhoto} alt={currentUserDisplayName} />
                 ) : (
-                  getInitials(currentUser?.name)
+                  getInitials(currentUserDisplayName)
                 )}
               </div>
               <div className="participant-info">
                 <div className="participant-name-row">
-                  <span className="participant-name">{currentUser?.name || 'You'} (You)</span>
+                  <span className="participant-name">{currentUserDisplayName} (You)</span>
                   {isHost && <span className="participant-chip">Host</span>}
                 </div>
                 <span className="participant-status">
-                  {currentUser?.designation || 'Guest'}
+                  {currentUserDesignation || 'Guest'}
                 </span>
               </div>
               <div className="participant-icons">

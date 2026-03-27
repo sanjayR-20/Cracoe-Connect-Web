@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDataStore } from '../store/dataStore';
 import '../styles/Auth.css';
 
@@ -9,10 +9,13 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const authenticate = useDataStore((state) => state.authenticate);
   const users = useDataStore((state) => state.users);
   const supabaseLoading = useDataStore((state) => state.supabaseLoading);
   const supabaseError = useDataStore((state) => state.supabaseError);
+  const redirectParam = new URLSearchParams(location.search).get('redirect') || '';
+  const redirectTarget = redirectParam.startsWith('/') ? redirectParam : '';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,6 +39,12 @@ export default function LoginScreen() {
       const loggedInUser = users.find(
         (u) => u.username === username.trim().toLowerCase()
       );
+
+      if (redirectTarget) {
+        navigate(redirectTarget, { replace: true });
+        setLoading(false);
+        return;
+      }
       
       // CEO (admin) always goes to dashboard, others need profile setup if not completed
       if (loggedInUser && !loggedInUser.profileCompleted && loggedInUser.designation !== 'CEO') {

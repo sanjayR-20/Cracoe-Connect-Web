@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useDataStore } from './store/dataStore';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
@@ -14,16 +14,20 @@ import './styles/index.css';
 function ProtectedRoute({ children }) {
   const currentUserId = useDataStore((state) => state.currentUserId);
   const getCurrentUser = useDataStore((state) => state.getCurrentUser);
+  const location = useLocation();
 
   if (!currentUserId) {
-    return <Navigate to="/" replace />;
+    const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={`/?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
   }
 
   const currentUser = getCurrentUser();
+  const isMeetRoute = location.pathname.startsWith('/video-meet');
   
   // Check if profile is completed, redirect to profile setup if not
-  // CEO (admin) is always considered to have completed profile
-  if (currentUser && !currentUser.profileCompleted && currentUser.designation !== 'CEO') {
+  // CEO (admin) is always considered to have completed profile.
+  // Meeting links should still open directly after login, so skip this redirect for /video-meet.
+  if (currentUser && !currentUser.profileCompleted && currentUser.designation !== 'CEO' && !isMeetRoute) {
     return <Navigate to="/profile-setup" replace />;
   }
 
