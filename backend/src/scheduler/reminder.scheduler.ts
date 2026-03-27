@@ -16,24 +16,29 @@ export class ReminderScheduler {
 
   @Cron('0 * * * *')
   async handleHourly() {
-    const now = new Date();
-    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    try {
+      const now = new Date();
+      const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        deadline: { lt: in24h, gt: now },
-        status: { not: 'Completed' },
-      },
-      include: { assignedTo: true },
-    });
+      const tasks = await this.prisma.task.findMany({
+        where: {
+          deadline: { lt: in24h, gt: now },
+          status: { not: 'Completed' },
+        },
+        include: { assignedTo: true },
+      });
 
-    for (const task of tasks) {
-      await this.prisma.task.update({ where: { id: task.id }, data: { isUrgent: true } });
-      await this.sendEmail(task.assignedTo.email, task.title, task.deadline);
-      await this.sendPush(task.assignedTo.id, task.title, task.deadline);
+      for (const task of tasks) {
+        await this.prisma.task.update({ where: { id: task.id }, data: { isUrgent: true } });
+        await this.sendEmail(task.assignedTo.email, task.title, task.deadline);
+        await this.sendPush(task.assignedTo.id, task.title, task.deadline);
+      }
+
+      this.logger.log(`Reminder run completed: ${tasks.length} tasks flagged`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Reminder run skipped: ${message}`);
     }
-
-    this.logger.log(`Reminder run completed: ${tasks.length} tasks flagged`);
   }
 
   private async sendEmail(to: string, title: string, deadline: Date) {

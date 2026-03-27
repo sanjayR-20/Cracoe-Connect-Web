@@ -45,6 +45,7 @@ type TrackedSocket = WebSocket & {
 };
 
 const rooms = new Map<string, RoomInfo>();
+const ROOM_CODE_PATTERN = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/;
 
 const send = (socket: WebSocket, payload: unknown) => {
   if (socket.readyState === WebSocket.OPEN) {
@@ -326,10 +327,18 @@ export const createSignalingServer = (server: HttpServer) => {
       }
 
       if (message.type === 'join') {
-        const roomId = message.roomId?.trim();
+        const roomId = message.roomId?.trim().toLowerCase();
         const peerId = message.peerId?.trim();
         if (!roomId || !peerId) {
           send(socket, { type: 'error', message: 'Missing roomId or peerId' });
+          return;
+        }
+        if (!ROOM_CODE_PATTERN.test(roomId)) {
+          send(socket, {
+            type: 'error',
+            code: 'INVALID_ROOM_ID',
+            message: 'Invalid meeting code. Use format: abc-defg-hij',
+          });
           return;
         }
 
@@ -382,7 +391,7 @@ export const createSignalingServer = (server: HttpServer) => {
       }
 
       if (message.type === 'update-state') {
-        const roomId = message.roomId?.trim() || currentRoomId;
+        const roomId = message.roomId?.trim().toLowerCase() || currentRoomId;
         const peerId = message.peerId?.trim() || currentPeerId;
         if (!roomId || !peerId) {
           return;
@@ -410,7 +419,7 @@ export const createSignalingServer = (server: HttpServer) => {
       }
 
       if (message.type === 'signal') {
-        const roomId = message.roomId?.trim() || currentRoomId;
+        const roomId = message.roomId?.trim().toLowerCase() || currentRoomId;
         const peerId = message.peerId?.trim() || currentPeerId;
         if (!roomId || !peerId || message.data === undefined) {
           return;
@@ -486,6 +495,11 @@ export const createSignalingServer = (server: HttpServer) => {
       }
     });
 
+    socket.on('error', (error) => {
+      // eslint-disable-next-line no-console
+      console.error('[signaling] socket error', error);
+    });
+
     socket.on('close', () => {
       if (trackedSocket.skipCleanup) {
         trackedSocket.skipCleanup = false;
@@ -513,6 +527,11 @@ export const createSignalingServer = (server: HttpServer) => {
 
   wss.on('close', () => {
     clearInterval(heartbeat);
+  });
+
+  wss.on('error', (error) => {
+    // eslint-disable-next-line no-console
+    console.error('[signaling] server error', error);
   });
 
   return wss;
