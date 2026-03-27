@@ -9,7 +9,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       console.warn('DATABASE_URL not configured. Prisma features will be unavailable.');
       return;
     }
-    await this.$connect();
+    try {
+      await this.$connect();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to connect Prisma database. Continuing without DB features. ${message}`);
+    }
   }
 
   async onModuleDestroy() {

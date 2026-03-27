@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: cracoe-connect-signaling
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_DOMAIN
+        value: cracoe.com
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SENDGRID_FROM_EMAIL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SIGNALING_MAX_PARTICIPANTS
+        value: 12
+
+  - type: web
+    name: cracoe-connect-web
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: build
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: REACT_APP_SUPABASE_URL
+        sync: false
+      - key: REACT_APP_SUPABASE_ANON_KEY
+        sync: false
+      - key: REACT_APP_SIGNALING_URL
+        sync: false
+      - key: REACT_APP_TURN_URLS
+        sync: false
+      - key: REACT_APP_TURN_USERNAME
+        sync: false
+      - key: REACT_APP_TURN_CREDENTIAL
+        sync: false

@@ -25,6 +25,7 @@ import {
   buildMeetingJoinLink,
   generateMeetingRoomCode,
   getMeetingTiming,
+  isMeetingRoomCode,
   normalizeMeetingRoomCode,
   parseMeetingInput,
 } from '../lib/meetingUtils';
@@ -151,7 +152,8 @@ export default function VideoMeetScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const roomFromUrl = normalizeMeetingRoomCode(params.get('room') || '');
+  const normalizedRoomFromUrl = normalizeMeetingRoomCode(params.get('room') || '');
+  const roomFromUrl = isMeetingRoomCode(normalizedRoomFromUrl) ? normalizedRoomFromUrl : '';
   const startFromUrl = params.get('start') || '';
   const titleFromUrl = params.get('title') || '';
   const meetingIdFromUrl = params.get('meeting') || '';
@@ -513,7 +515,7 @@ export default function VideoMeetScreen() {
     }
 
     const normalizedRoomId = normalizeMeetingRoomCode(meetingRoomId);
-    if (!normalizedRoomId) {
+    if (!isMeetingRoomCode(normalizedRoomId)) {
       setError('Please enter a valid meeting code');
       setConnectionStatus('error');
       return;

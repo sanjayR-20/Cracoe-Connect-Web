@@ -8,8 +8,10 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { HealthController } from './health.controller';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     PrismaModule,
     AuthModule,

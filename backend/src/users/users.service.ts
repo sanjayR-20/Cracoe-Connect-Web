@@ -3,7 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -63,18 +62,14 @@ export class UsersService {
       throw new Error('User not found');
     }
 
-    // For now, we'll do simple string comparison
-    // In production, you'd use bcrypt.compare
+    // For now, we'll do simple string comparison.
     if (user.password !== dto.currentPassword) {
       throw new Error('Current password is incorrect');
     }
 
-    // Hash the new password in production
-    // const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    
     return this.prisma.user.update({
       where: { id },
-      data: { password: dto.newPassword }, // Use hashedPassword in production
+      data: { password: dto.newPassword },
     });
   }
 

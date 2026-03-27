@@ -209,8 +209,9 @@ export const parseMeetingInput = (input = '') => {
   const parseFromUrl = (value) => {
     try {
       const parsed = new URL(value);
+      const normalizedRoomId = normalizeMeetingRoomCode(parsed.searchParams.get('room') || '');
       return {
-        roomId: normalizeMeetingRoomCode(parsed.searchParams.get('room') || ''),
+        roomId: isMeetingRoomCode(normalizedRoomId) ? normalizedRoomId : '',
         start: toIsoIfValid(parsed.searchParams.get('start') || ''),
         title: parsed.searchParams.get('title') || '',
         meetingId: parsed.searchParams.get('meeting') || '',
@@ -236,8 +237,9 @@ export const parseMeetingInput = (input = '') => {
     try {
       const query = rawInput.includes('?') ? rawInput.split('?')[1] : rawInput;
       const queryParams = new URLSearchParams(query);
+      const normalizedRoomId = normalizeMeetingRoomCode(queryParams.get('room') || '');
       return {
-        roomId: normalizeMeetingRoomCode(queryParams.get('room') || ''),
+        roomId: isMeetingRoomCode(normalizedRoomId) ? normalizedRoomId : '',
         start: toIsoIfValid(queryParams.get('start') || ''),
         title: queryParams.get('title') || '',
         meetingId: queryParams.get('meeting') || '',
@@ -254,7 +256,7 @@ export const parseMeetingInput = (input = '') => {
 
   const roomId = normalizeMeetingRoomCode(rawInput);
   return {
-    roomId,
+    roomId: isMeetingRoomCode(roomId) ? roomId : '',
     start: '',
     title: '',
     meetingId: '',
